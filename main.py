@@ -1,6 +1,8 @@
+from queue import Queue
 import subprocess
 from time import sleep
 from pexpect import popen_spawn
+from threading import Thread
 import os
 import os.path
 import pexpect
@@ -10,34 +12,45 @@ class ServerWrapper():
         os.chdir(os.getcwd() + "\TestServer")
 
         # delete old logfile
-        if os.path.exists("logfile.txt"):
-            os.system("del logfile.txt")
+        if os.path.exists("mcserverlogs.txt"):
+            os.system("del mcserverlogs.txt")
+
+        self.child = None
+        self._started = False
+        self.command_queue = Queue()
+        # Thread(target=self._command_executer, daemon=True).start()
+        Thread(target=self._output_reader, daemon=True).start()
 
     def startup(self):
-        # f = open("logfile.txt", "ab")
+        # f = open("mcserverlogs.txt", "ab")
         self.child = popen_spawn.PopenSpawn("java -Xmx2G -jar server.jar nogui", timeout=1)
 
         # wait until the server finished starting
-        while True:
-            # print out the startup logs
-            output = b""
-            while True:
-                try:
-                    output += self.child.read(1)
-                except pexpect.exceptions.TIMEOUT:
-                    break
-            output = output.decode("ascii").replace("\n", "")
-            if output != "":
-                print(output)
-                with open("logfile.txt", "a") as logfile:
-                    logfile.write(output)
-                if "For help, type" in output:
-                    break
+        while not self._started:
+            sleep(1)
 
     def send_command(self, command, wait_time):
-        self.child.sendline(command)
-        sleep(wait_time)
+        # self.command_queue.put((command, wait_time))
+        self._execute_command(command, wait_time)
+        self._read_output()
 
+    def stop(self):
+        self.child.sendline("/stop")
+        self.child.wait()
+        output = self.child.read(-1)
+        print(output.decode("ascii"))
+        with open("mcserverlogs.txt", "ab") as logfile:
+            logfile.write(("/stop\n").encode("ascii"))
+            logfile.write(output)
+
+    def _output_reader(self):
+        while not self._started:
+            if self.child is not None:
+                self._read_output()
+            else:
+                sleep(1)
+
+    def _read_output(self):
         output = b""
         try:
             while True:
@@ -53,26 +66,36 @@ class ServerWrapper():
             except pexpect.exceptions.TIMEOUT:
                 pass
 
-        print(command)
-        print(output.decode("ascii"))
-        with open("logfile.txt", "ab") as logfile:
-            logfile.write((command + "\n").encode("ascii"))
-            logfile.write(output)
-        return output.decode("ascii")
+        output = output.decode("ascii").replace("\n", "")
+        if not self._started and "For help, type" in output:
+            self._started = True
+        if output != "":
+            for item in output.split("\r"):
+                if item != "":
+                    print(item)
+            with open("mcserverlogs.txt", "a") as logfile:
+                logfile.write(output.replace("\r", "\n"))
 
-    def stop(self):
-        self.child.sendline("/stop")
-        self.child.wait()
-        output = self.child.read(-1)
-        print(output.decode("ascii"))
-        with open("logfile.txt", "ab") as logfile:
-            logfile.write(("/stop\n").encode("ascii"))
-            logfile.write(output)
+    def _command_executer(self):
+        while True:
+            if not self.command_queue.empty():
+                self._execute_command()
+            sleep(1)
+
+    def _execute_command(self, command, wait_time):
+        # command, wait_time = self.command_queue.get(block=True)
+        self.child.sendline(command)
+        print(command)
+        with open("mcserverlogs.txt", "ab") as logfile:
+            logfile.write((command + "\n").encode("ascii"))
+
+        sleep(wait_time)
 
 wrapper = ServerWrapper()
 wrapper.startup()
 wrapper.send_command("/time set day", 1)
 wrapper.send_command("/time set night", 1)
+
 wrapper.stop()
 
 exit()
