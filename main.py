@@ -17,9 +17,10 @@ class ServerWrapper():
 
         self.child = None
         self._started = False
+        self._exiting = False
         self.command_queue = Queue()
         # Thread(target=self._command_executer, daemon=True).start()
-        Thread(target=self._output_reader, daemon=True).start()
+        Thread(target=self._output_reader).start()
 
     def startup(self):
         # f = open("mcserverlogs.txt", "ab")
@@ -29,22 +30,26 @@ class ServerWrapper():
         while not self._started:
             sleep(1)
 
-    def send_command(self, command, wait_time):
-        # self.command_queue.put((command, wait_time))
-        self._execute_command(command, wait_time)
-        self._read_output()
+    def send_command(self, command, wait_time=5, print_to_console=False):
+        if command[0] != "/":
+            command = "/" + command
+
+        if command == "/stop":
+            self.stop()
+        else:
+            self._execute_command(command, wait_time, print_to_console)
+            self._read_output()
 
     def stop(self):
+        self._exiting = True
         self.child.sendline("/stop")
+        with open("mcserverlogs.txt", "a") as logfile:
+            logfile.write(("/stop\n"))
+
         self.child.wait()
-        output = self.child.read(-1)
-        print(output.decode("ascii"))
-        with open("mcserverlogs.txt", "ab") as logfile:
-            logfile.write(("/stop\n").encode("ascii"))
-            logfile.write(output)
 
     def _output_reader(self):
-        while not self._started:
+        while not self._exiting:
             if self.child is not None:
                 self._read_output()
             else:
@@ -53,11 +58,15 @@ class ServerWrapper():
     def _read_output(self):
         output = b""
         try:
-            while True:
+            tries = 10000
+            while tries > 0:
+                tries -= 1
                 output += self.child.read(10)
         except pexpect.exceptions.TIMEOUT:
             try:
-                while True:
+                tries = 10000
+                while tries > 0:
+                    tries -= 1
                     read = self.child.read(1)
                     if read == "":
                         break
@@ -76,38 +85,23 @@ class ServerWrapper():
             with open("mcserverlogs.txt", "a") as logfile:
                 logfile.write(output.replace("\r", "\n"))
 
-    def _command_executer(self):
-        while True:
-            if not self.command_queue.empty():
-                self._execute_command()
-            sleep(1)
-
-    def _execute_command(self, command, wait_time):
+    def _execute_command(self, command, wait_time, print_to_console=False):
         # command, wait_time = self.command_queue.get(block=True)
         self.child.sendline(command)
-        print(command)
+        if print_to_console:
+            print(command)
         with open("mcserverlogs.txt", "ab") as logfile:
             logfile.write((command + "\n").encode("ascii"))
 
         sleep(wait_time)
 
-wrapper = ServerWrapper()
-wrapper.startup()
-wrapper.send_command("/time set day", 1)
-wrapper.send_command("/time set night", 1)
+if __name__ == "__main__":
+    wrapper = ServerWrapper()
+    wrapper.startup()
+    wrapper.send_command("/time set day", 1, True)
+    wrapper.send_command("/time set night", 1, True)
 
-wrapper.stop()
-
-exit()
-
-p = subprocess.Popen("cmd /k java -Xmx2G -jar server.jar nogui", shell=True, stdin=subprocess.PIPE, stdout=f, stderr=f, text=True)
-
-# change directory
-# p.stdin.write("cd ./TestServer; echo Text")
-
-# cmd = ["java", "-Xmx2G", "-jar", "server.jar", "nogui"]
-# start the server
-# p.stdin.write("java -Xmx2G -jar server.jar nogui")
-# p.communicate()
-# stdOutput, stdError = p.communicate()
-# print(stdOutput)
+    command = ""
+    while command != "/stop":
+        command = input()
+        wrapper.send_command(command)
