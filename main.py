@@ -31,6 +31,8 @@ class ServerWrapper():
             sleep(1)
 
     def send_command(self, command, wait_time=5, print_to_console=False):
+        if len(command) == 0:
+            return
         if command[0] != "/":
             command = "/" + command
 
@@ -49,35 +51,32 @@ class ServerWrapper():
         self.child.wait()
 
     def _output_reader(self):
+        while self.child is None:
+            sleep(1)
         while not self._exiting:
-            if self.child is not None:
-                self._read_output()
-            else:
-                sleep(1)
+            self._read_output()
 
     def _read_output(self):
         output = b""
         try:
-            tries = 10000
+            tries = 1024
             while tries > 0:
                 tries -= 1
-                output += self.child.read(10)
+                output += self.child.read(1)
+                if b"\r" in output:
+                    self._format_and_print(output)
+                    output = b""
+                    tries = 1024
         except pexpect.exceptions.TIMEOUT:
-            try:
-                tries = 10000
-                while tries > 0:
-                    tries -= 1
-                    read = self.child.read(1)
-                    if read == "":
-                        break
-                    else:
-                        output += read
-            except pexpect.exceptions.TIMEOUT:
-                pass
+            pass
+        self._format_and_print(output)
 
+    def _format_and_print(self, output):
         output = output.decode("ascii").replace("\n", "")
         if not self._started and "For help, type" in output:
             self._started = True
+        if not self._exiting and "Stopping server" in output:
+            self.stop()
         if output != "":
             for item in output.split("\r"):
                 if item != "":
@@ -102,6 +101,6 @@ if __name__ == "__main__":
     wrapper.send_command("/time set night", 1, True)
 
     command = ""
-    while command != "/stop":
+    while command != "/stop" and not wrapper._exiting:
         command = input()
         wrapper.send_command(command)
