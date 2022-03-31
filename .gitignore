@@ -1,3 +1,8 @@
 TestServer/*
+TestServerModded/*
 !TestServer/server.jar
-!TestServer/eula.txt
+!TestServer/start_testserver.bat
+!TestServerModded/libraries
+!TestServerModded/forge-1.7.10-10.13.4.1614-1.7.10-universal.jar
+!TestServerModded/minecraft_server.1.7.10.jar
+!TestServerModded/start_testservermodded.bat
