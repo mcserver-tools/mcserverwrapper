@@ -129,7 +129,7 @@ class ServerWrapper():
 if __name__ == "__main__":
     wrapper = ServerWrapper()
     wrapper.startup()
-    wrapper.send_command("/time set day", 1, True)
+    # wrapper.send_command("/time set day", 1, True)
 
     command = ""
     while command != "/stop" and not wrapper._exiting:
