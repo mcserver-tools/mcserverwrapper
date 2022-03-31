@@ -1,5 +1,5 @@
 from queue import Queue
-import subprocess
+import sys
 from time import sleep
 from pexpect import popen_spawn
 from threading import Thread
@@ -7,9 +7,11 @@ import os
 import os.path
 import pexpect
 
+DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
+
 class ServerWrapper():
     def __init__(self) -> None:
-        os.chdir(os.getcwd() + "\TestServer")
+        # os.chdir(__file__.rsplit("\\", maxsplit=1)[0] + "\TestServer")
 
         # delete old logfile
         if os.path.exists("mcserverlogs.txt"):
@@ -23,14 +25,31 @@ class ServerWrapper():
         Thread(target=self._output_reader).start()
 
     def startup(self):
-        # f = open("mcserverlogs.txt", "ab")
-        self.child = popen_spawn.PopenSpawn("java -Xmx2G -jar server.jar nogui", timeout=1)
+        if "-f" in sys.argv:
+            index = sys.argv.index("-f")
+            self.child = popen_spawn.PopenSpawn(sys.argv[index + 1], timeout=1)
+        else:
+            args = {
+                "java": "java",
+                "ram": "-Xmx4G",
+                "serverjar": "server.jar"
+            }
+            if "-s" in sys.argv:
+                index = sys.argv.index("-s")
+                args["serverjar"] = sys.argv[index + 1]
+            if "-j" in sys.argv:
+                index = sys.argv.index("-j")
+                args["java"] = sys.argv[index + 1]
+            if "-r" in sys.argv:
+                index = sys.argv.index("-r")
+                args["ram"] = sys.argv[index + 1]
+            self.child = popen_spawn.PopenSpawn(" ".join((args["java"], args["ram"], "-jar", args["serverjar"], "nogui")), timeout=1)
 
         # wait until the server finished starting
         while not self._started:
             sleep(1)
 
-    def send_command(self, command, wait_time=5, print_to_console=False):
+    def send_command(self, command, wait_time=3, print_to_console=False):
         if len(command) == 0:
             return
         if command[0] != "/":
@@ -72,17 +91,30 @@ class ServerWrapper():
         self._format_and_print(output)
 
     def _format_and_print(self, output):
-        output = output.decode("ascii").replace("\n", "")
-        if not self._started and "For help, type" in output:
+        try:
+            output_str = output.decode("ascii").replace("\n", "")
+        except UnicodeDecodeError:
+            output_str = ""
+            for char in [output[i:i+1] for i in range(len(output))]:
+                try:
+                    output_str += char.decode("ascii")
+                except UnicodeDecodeError:
+                    pass
+                except AttributeError:
+                    print(output)
+                    print(char)
+                    print(type(char))
+            output_str = output_str.replace("\n", "")
+        if not self._started and "For help, type" in output_str:
             self._started = True
-        if not self._exiting and "Stopping server" in output:
+        if not self._exiting and "Stopping server" in output_str:
             self.stop()
-        if output != "":
-            for item in output.split("\r"):
+        if output_str != "":
+            for item in output_str.split("\r"):
                 if item != "":
                     print(item)
             with open("mcserverlogs.txt", "a") as logfile:
-                logfile.write(output.replace("\r", "\n"))
+                logfile.write(output_str.replace("\r", "\n"))
 
     def _execute_command(self, command, wait_time, print_to_console=False):
         # command, wait_time = self.command_queue.get(block=True)
@@ -98,7 +130,6 @@ if __name__ == "__main__":
     wrapper = ServerWrapper()
     wrapper.startup()
     wrapper.send_command("/time set day", 1, True)
-    wrapper.send_command("/time set night", 1, True)
 
     command = ""
     while command != "/stop" and not wrapper._exiting:

@@ -1,0 +1,1 @@
+mcserverwrapper -j "C:\Program Files\Java\jdk1.8.0_202\bin\java.exe" -r -Xmx4G -jar -s forge-1.7.10-10.13.4.1614-1.7.10-universal.jar nogui
