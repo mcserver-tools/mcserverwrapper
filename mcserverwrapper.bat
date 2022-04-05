@@ -1,3 +1,4 @@
-echo off
-py C:\Users\emanu\source\repos\mcserver-tools\mcserverwrapper\main.py %*
-pause
+@echo Starting Minecraft server using mcserverwrapper...
+@py C:\Users\emanu\source\repos\mcserver-tools\mcserverwrapper\main.py %*
+@echo mcserverwrapper exited...
+@pause
