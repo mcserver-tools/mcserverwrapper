@@ -1,0 +1,1 @@
+java -Xmx8G -jar paper-1.18.2-277.jar nogui

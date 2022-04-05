@@ -1,0 +1,20 @@
+[10:26:59] [Server thread/INFO]: Starting minecraft server version 1.7.10
+[10:27:00] [Server thread/INFO]: Loading properties
+[10:27:00] [Server thread/INFO]: Default game type: SURVIVAL
+[10:27:00] [Server thread/INFO]: Generating keypair
+[10:27:00] [Server thread/INFO]: Starting Minecraft server on *:25565
+[10:27:00] [Server thread/INFO]: Preparing level "world"
+[10:27:01] [Server thread/INFO]: Preparing start region for level 0
+[10:27:01] [Server thread/INFO]: Done (0,467s)! For help, type "help" or "?"
+[10:27:26] [User Authenticator #1/INFO]: UUID of player Emanuel1 is a13ee8e9-6cd7-4def-81df-c010a0dd8e92
+[10:27:26] [Server thread/INFO]: Emanuel1[/91.227.237.208:52077] logged in with entity id 120 at (-256.2866028926518, 109.38492610141283, -160.5408871179373)
+[10:27:26] [Server thread/INFO]: Emanuel1 joined the game
+[10:27:27] [Server thread/INFO]: Emanuel1 lost connection: TranslatableComponent{key='disconnect.genericReason', args=[Internal Exception: java.io.IOException: Eine vorhandene Verbindung wurde vom Remotehost geschlossen], siblings=[], style=Style{hasParent=false, color=null, bold=null, italic=null, underlined=null, obfuscated=null, clickEvent=null, hoverEvent=null}}
+[10:27:27] [Server thread/INFO]: Emanuel1 left the game
+[10:28:03] [Server thread/INFO]: Stopping the server
+[10:28:03] [Server thread/INFO]: Stopping server
+[10:28:03] [Server thread/INFO]: Saving players
+[10:28:03] [Server thread/INFO]: Saving worlds
+[10:28:03] [Server thread/INFO]: Saving chunks for level 'world'/Overworld
+[10:28:03] [Server thread/INFO]: Saving chunks for level 'world'/Nether
+[10:28:03] [Server thread/INFO]: Saving chunks for level 'world'/The End
