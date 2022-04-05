@@ -1,1 +1,0 @@
-mcserverwrapper -r -Xmx8G -s paper-1.18.2-277.jar
