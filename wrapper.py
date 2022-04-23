@@ -9,7 +9,12 @@ from server import Server
 DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 
 class Wrapper():
-    def __init__(self) -> None:
+    def __init__(self, args="") -> None:
+        if args != "":
+            self.args = args.split(" ")
+        else:
+            self.args = sys.argv[1::]
+
         # delete old logfile
         if os.path.exists("mcserverlogs.txt"):
             os.system("del mcserverlogs.txt")
@@ -46,15 +51,15 @@ class Wrapper():
             "serverjar": "server.jar"
         }
 
-        if "-jar" in sys.argv:
-            index = sys.argv.index("-jar")
-            args["serverjar"] = sys.argv[index + 1]
-        if "-java" in sys.argv:
-            index = sys.argv.index("-java")
-            args["java"] = sys.argv[index + 1]
-        if "-ram" in sys.argv:
-            index = sys.argv.index("-ram")
-            args["ram"] = sys.argv[index + 1]
+        if "-jar" in self.args:
+            index = self.args.index("-jar")
+            args["serverjar"] = self.args[index + 1]
+        if "-java" in self.args:
+            index = self.args.index("-java")
+            args["java"] = self.args[index + 1]
+        if "-ram" in self.args:
+            index = self.args.index("-ram")
+            args["ram"] = self.args[index + 1]
 
         return " ".join((args["java"], "-Xmx" + args["ram"], "-jar", args["serverjar"], "nogui"))
 
@@ -67,16 +72,16 @@ class Wrapper():
         with open("./server.properties", "r") as properties:
             lines = properties.readlines()
 
-        if "-port" in sys.argv:
+        if "-port" in self.args:
             for line in lines:
                 if "server-port=" in line:
                     index = lines.index(line)
-                    lines[index] = "server-port=" + sys.argv[sys.argv.index("-port") + 1] + "\n"
-        if "-maxp" in sys.argv:
+                    lines[index] = "server-port=" + self.args[self.args.index("-port") + 1] + "\n"
+        if "-maxp" in self.args:
             for line in lines:
                 if "max-players=" in line:
                     index = lines.index(line)
-                    lines[index] = "max-players=" + sys.argv[sys.argv.index("-maxp") + 1] + "\n"
+                    lines[index] = "max-players=" + self.args[self.args.index("-maxp") + 1] + "\n"
 
         with open("./server.properties", "w") as properties:
             properties.writelines(lines)
