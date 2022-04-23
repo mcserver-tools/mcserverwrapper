@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from time import sleep
 import pexpect
 from pexpect import popen_spawn
@@ -66,18 +65,25 @@ class Server():
                 pass
         yield output
 
-        try:
-            output = b""
-            start_time = datetime.now()
-            while (datetime.now() - start_time) < timedelta(seconds=5):
-                output += self._child.read(1)
+        output = b""
+        empties = 0
+        while True:
+            try:
+                char = self._child.read(1)
+                if char == b"":
+                    empties += 1
+                else:
+                    empties = 0
+                output += char
                 if b"\r" in output:
                     yield output
                     output = b""
-        except pexpect.exceptions.TIMEOUT:
-            pass
-        yield output
-        yield self._child.read(-1)
+                if empties >= 10:
+                    return output
+            except pexpect.exceptions.TIMEOUT:
+                pass
+            except pexpect.exceptions.EOF:
+                return output
 
     def _format_version(self, version_raw):
             self._version = version_raw
