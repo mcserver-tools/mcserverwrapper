@@ -1,3 +1,4 @@
+from queue import Queue
 import sys
 from time import sleep
 from threading import Thread
@@ -9,7 +10,7 @@ from server import Server
 DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 
 class Wrapper():
-    def __init__(self, args="") -> None:
+    def __init__(self, output=True, args="") -> None:
         if args != "":
             self.args = args.split(" ")
         else:
@@ -20,7 +21,11 @@ class Wrapper():
             os.system("del mcserverlogs.txt")
 
         self.server = Server()
-        Thread(target=self._output_reader).start()
+        if output:
+            Thread(target=self._output_reader).start()
+        else:
+            self.output_queue = Queue()
+            Thread(target=self._output_formatter).start()
 
     def startup(self):
         self._edit_properties()
@@ -31,10 +36,6 @@ class Wrapper():
             return
 
         self.server.execute_command(command)
-        if printout:
-            print(command)
-        with open("mcserverlogs.txt", "a") as logfile:
-            logfile.write((command + "\n"))
 
         sleep(wait_time)
 
@@ -88,9 +89,17 @@ class Wrapper():
 
     def _output_reader(self):
         for item in self.server.read_output():
-            self._format_and_print(item)
+            self._format_text(item, True)
 
-    def _format_and_print(self, output):
+    def _output_formatter(self):
+        for item in self.server.read_output():
+            lines = self._format_text(item, False)
+            if lines is not None:
+                for line in lines:
+                    if line is not None and line != "":
+                        self.output_queue.put(line)
+
+    def _format_text(self, output, printout):
         try:
             output_str = output.decode("ascii").replace("\n", "")
         except UnicodeDecodeError:
@@ -104,11 +113,14 @@ class Wrapper():
                     pass
             output_str = output_str.replace("\n", "")
         if output_str != "":
-            for item in output_str.split("\r"):
-                if item != "":
-                    print(item)
-            with open("mcserverlogs.txt", "a") as logfile:
-                logfile.write(output_str.replace("\r", "\n"))
+            if printout:
+                for item in output_str.split("\r"):
+                    if item != "":
+                        print(item)
+                with open("mcserverlogs.txt", "a") as logfile:
+                    logfile.write(output_str.replace("\r", "\n"))
+            else:
+                return output_str.split("\r")
 
 # teststartcommand: 
 # mcserverwrapper -jar paper-1.18.2-277.jar -java java -ram 8G -port 25566 -maxp 5
