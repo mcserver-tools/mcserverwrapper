@@ -1,11 +1,11 @@
-from mcstatus import MinecraftServer
+from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 
 def ping_address_with_return(address, port) -> PingResponse | None:
     if isinstance(port, str):
         port = int(port)
     try:
-        server = MinecraftServer(address, port)
+        server = JavaServer(address, port)
         status = server.status()
         return status
     except TimeoutError:
