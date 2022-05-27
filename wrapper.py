@@ -11,10 +11,7 @@ DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 
 class Wrapper():
     def __init__(self, output=True, args="") -> None:
-        if args != "":
-            self.args = args.split(" ")
-        else:
-            self.args = sys.argv[1::]
+        self._parse_args(args)
 
         # delete old logfile
         if os.path.exists("mcserverlogs.txt"):
@@ -44,6 +41,33 @@ class Wrapper():
 
     def server_running(self):
         return self.server.is_running()
+
+    def _parse_args(self, args):
+        if args != "":
+            self.args = []
+            temp = ""
+            c = 0
+            while c < len(args):
+                if args[c] == '"':
+                    if temp != "":
+                        raise Exception(f"Invalid args: {args}")
+                    temp += args[c]
+                    c += 1
+                    while args[c] != '"':
+                        temp += args[c]
+                        c += 1
+                    temp += args[c]
+                    self.args.append(temp)
+                    temp = ""
+                elif args[c] == " ":
+                    self.args.append(temp)
+                    temp = ""
+                else:
+                    temp += args[c]
+                c += 1
+            self.args.append(temp)
+        else:
+            self.args = sys.argv[1::]
 
     def _get_start_command(self):
         args = {
