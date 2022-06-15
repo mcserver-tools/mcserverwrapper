@@ -10,8 +10,16 @@ from server import Server
 DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 
 class Wrapper():
-    def __init__(self, output=True, args="") -> None:
-        self._parse_args(args)
+    def __init__(self, output=True, command="", args={}) -> None:
+        if command != "":
+            self.cmd = command
+        elif len(sys.argv) == 2:
+            self.cmd = sys.argv[-1]
+        else:
+            self.cmd = DEFAULT_START_CMD
+            
+        
+        self.args = args
 
         # delete old logfile
         if os.path.exists("mcserverlogs.txt"):
@@ -26,7 +34,7 @@ class Wrapper():
 
     def startup(self):
         self._edit_properties()
-        self.server.start(self._get_start_command())
+        self.server.start(self.cmd)
 
     def send_command(self, command, wait_time=0, printout=True):
         if len(command) == 0:
@@ -42,71 +50,23 @@ class Wrapper():
     def server_running(self):
         return self.server.is_running()
 
-    def _parse_args(self, args):
-        if args != "":
-            self.args = []
-            temp = ""
-            c = 0
-            while c < len(args):
-                if args[c] == '"':
-                    if temp != "":
-                        raise Exception(f"Invalid args: {args}")
-                    temp += args[c]
-                    c += 1
-                    while args[c] != '"':
-                        temp += args[c]
-                        c += 1
-                    temp += args[c]
-                    self.args.append(temp)
-                    temp = ""
-                elif args[c] == " ":
-                    self.args.append(temp)
-                    temp = ""
-                else:
-                    temp += args[c]
-                c += 1
-            self.args.append(temp)
-        else:
-            self.args = sys.argv[1::]
-
-    def _get_start_command(self):
-        args = {
-            "java": "java",
-            "ram": "4G",
-            "serverjar": "server.jar"
-        }
-
-        if "-jar" in self.args:
-            index = self.args.index("-jar")
-            args["serverjar"] = self.args[index + 1]
-        if "-java" in self.args:
-            index = self.args.index("-java")
-            args["java"] = self.args[index + 1]
-        if "-ram" in self.args:
-            index = self.args.index("-ram")
-            args["ram"] = self.args[index + 1]
-
-        return " ".join((args["java"], "-Xmx" + args["ram"], "-jar", args["serverjar"], "nogui"))
-
     def _edit_properties(self):
         if not os.path.exists("./server.properties"):
             tempserver = Server()
-            tempserver.start(self._get_start_command())
+            tempserver.start(self.cmd)
             tempserver.stop()
 
         with open("./server.properties", "r") as properties:
             lines = properties.readlines()
 
-        if "-port" in self.args:
-            for line in lines:
+        if "port" in self.args:
+            for index, line in enumerate(lines):
                 if "server-port=" in line:
-                    index = lines.index(line)
-                    lines[index] = "server-port=" + self.args[self.args.index("-port") + 1] + "\n"
-        if "-maxp" in self.args:
-            for line in lines:
+                    lines[index] = "server-port=" + self.args["port"] + "\n"
+        if "maxp" in self.args:
+            for index, line in enumerate(lines):
                 if "max-players=" in line:
-                    index = lines.index(line)
-                    lines[index] = "max-players=" + self.args[self.args.index("-maxp") + 1] + "\n"
+                    lines[index] = "max-players=" + self.args["maxp"] + "\n"
 
         with open("./server.properties", "w") as properties:
             properties.writelines(lines)
