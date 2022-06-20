@@ -1,24 +1,30 @@
-from queue import Queue
-import sys
-from time import sleep
-from threading import Thread
+"""A module containing the wrapper class"""
+
 import os
 import os.path
+import sys
+from queue import Queue
+from threading import Thread
+from time import sleep
 
 from server import Server
 
 DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 
 class Wrapper():
-    def __init__(self, output=True, command="", args={}) -> None:
+    """The outer shell of the wrapper, handling inputs and oputputs"""
+
+    def __init__(self, command="", args=None, output=True) -> None:
+        if args is None:
+            args = {}
+
         if command != "":
             self.cmd = command
         elif len(sys.argv) == 2:
             self.cmd = sys.argv[-1]
         else:
             self.cmd = DEFAULT_START_CMD
-            
-        
+
         self.args = args
 
         # delete old logfile
@@ -27,16 +33,20 @@ class Wrapper():
 
         self.server = Server()
         if output:
-            Thread(target=self._output_reader).start()
+            Thread(target=self._output_reader, daemon=True).start()
         else:
             self.output_queue = Queue()
-            Thread(target=self._output_formatter).start()
+            Thread(target=self._output_formatter, daemon=True).start()
 
     def startup(self):
+        """Starts the minecraft server"""
+
         self._edit_properties()
         self.server.start(self.cmd)
 
-    def send_command(self, command, wait_time=0, printout=True):
+    def send_command(self, command, wait_time=0):
+        """Sends and executes a command on the server, then waits for the given wait_time"""
+
         if len(command) == 0:
             return
 
@@ -45,18 +55,47 @@ class Wrapper():
         sleep(wait_time)
 
     def stop(self):
+        """Stops the server"""
+
         self.server.stop()
 
     def server_running(self):
+        """Retursn True if the server is pingeable"""
+
         return self.server.is_running()
 
     def _edit_properties(self):
-        if not os.path.exists("./server.properties"):
-            tempserver = Server()
-            tempserver.start(self.cmd)
-            tempserver.stop()
+        """Saves the port and max players to the server.properites"""
 
-        with open("./server.properties", "r") as properties:
+        # pylint: disable=W0703
+
+        # if the Server is started for the first time,
+        # create a temp server to create the eula and server.properties
+        if not os.path.isfile("./server.properties") or not os.path.isfile("eula.txt"):
+            tempserver = Server()
+            try:
+                tempserver.start(self.cmd, blocking=False)
+            except Exception as exc:
+                # some versions only add an empty server.properties,
+                # so just add the port and max players
+                if "Port couldn't be read from server.properties" in exc.args:
+                    self._append_properties()
+                else:
+                    raise exc
+
+            # accept the eula
+            with open("eula.txt", "r", encoding="utf8") as file:
+                lines = file.readlines()
+                for index, line in enumerate(lines):
+                    if line == "eula=false\n":
+                        lines[index] = "eula=true\n"
+            with open("eula.txt", "w", encoding="utf8") as file:
+                file.writelines(lines)
+
+        # pylint: enable=W0703
+
+        # save the provided port and max players to the server.properties
+        with open("./server.properties", "r", encoding="utf8") as properties:
             lines = properties.readlines()
 
         if "port" in self.args:
@@ -66,16 +105,28 @@ class Wrapper():
         if "maxp" in self.args:
             for index, line in enumerate(lines):
                 if "max-players=" in line:
-                    lines[index] = f"max-players={self.args['maxp']}\n"
+                    lines[index] = f"max-players={self.args['port']}\n"
 
-        with open("./server.properties", "w") as properties:
+        with open("./server.properties", "w", encoding="utf8") as properties:
+            properties.writelines(lines)
+
+    def _append_properties(self):
+        with open("./server.properties", "r", encoding="utf8") as properties:
+            lines = properties.readlines()
+        lines.append(f"server-port={self.args['port'] if 'port' in self.args else 25565}\n")
+        lines.append(f"max-players={self.args['maxp'] if 'maxp' in self.args else 20}\n")
+        with open("./server.properties", "w", encoding="utf8") as properties:
             properties.writelines(lines)
 
     def _output_reader(self):
+        """Print out all of the server logs"""
+
         for item in self.server.read_output():
             self._format_text(item, True)
 
     def _output_formatter(self):
+        """Save all of the output lines to the queue"""
+
         for item in self.server.read_output():
             lines = self._format_text(item, False)
             if lines is not None:
@@ -83,33 +134,45 @@ class Wrapper():
                     if line is not None and line != "":
                         self.output_queue.put(line)
 
-    def _format_text(self, output, printout):
+    @staticmethod
+    def _format_text(output, printout):
+        """Format the given text"""
+
+        # try to decode the output string
         try:
             output_str = output.decode("ascii").replace("\n", "")
+        # if the total decoding fails, decode every char individually
         except UnicodeDecodeError:
             output_str = ""
             for char in [output[i:i+1] for i in range(len(output))]:
                 try:
                     output_str += char.decode("ascii")
+                # if the conversion fails, skip the char
                 except UnicodeDecodeError:
                     pass
                 except AttributeError:
                     pass
             output_str = output_str.replace("\n", "")
+
+        # ignore empty output strings to prevent empty lines
         if output_str != "":
+            # in print mode, print the output string
             if printout:
+                # print each line individually if it isn't empty
                 for item in output_str.split("\r"):
                     if item != "":
                         print(item)
-                with open("mcserverlogs.txt", "a") as logfile:
+                with open("mcserverlogs.txt", "a", encoding="utf8") as logfile:
                     logfile.write(output_str.replace("\r", "\n"))
+            # if not in print mode, return all lines as a list
             else:
                 return output_str.split("\r")
+        return None
 
-# teststartcommand: 
+# teststartcommand:
 # mcserverwrapper -jar paper-1.18.2-277.jar -java java -ram 8G -port 25566 -maxp 5
 
-# Valid arguments: 
+# Valid arguments:
 # -java: the path to the java.exe executable (default: java)
 # -jar: the server jar file (default: server.jar)
 # -ram: the amount of ram the server should use (default: 4G)
