@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
+from javascript import require, On, Once, AsyncTask, once, off
+mineflayer = require('mineflayer')
 
 from wrapper import Wrapper
 
@@ -43,7 +45,7 @@ def test_all_vanilla():
             if "Test timed out" in timeout_err.args:
                 failed += 1
                 print(f"{working}/{failed + working} versions passed, " + \
-                    f"{len(urls) - (failed + working)} remaining")
+                      f"{len(urls) - (failed + working)} remaining")
                 print(timeout_err)
                 print(urls[[item[0] for item in urls].index(url)][1])
                 print(urls[[item[0] for item in urls].index(url) - 1][1])
@@ -75,7 +77,21 @@ def _test_vanilla_url(url):
     assert wrapper.server_running()
     while not wrapper.output_queue.empty():
         wrapper.output_queue.get()
+
     wrapper.send_command("/say Hello World")
+    sleep(1)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "Hello World" in lines
+
+    _connect_mineflayer()
+    sleep(5)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "I spawned" in lines
+
     wrapper.stop()
     sleep(5)
     assert not wrapper.server_running()
@@ -105,6 +121,20 @@ def _get_vanilla_urls():
     print(f"Found {counter:3.0f} vanilla version urls")
     return links
 
+def _connect_mineflayer(address = "127.0.0.1", port = 25565):
+    bot = mineflayer.createBot({
+        'host': address,
+        'port': port,
+        'auth': 'microsoft',
+        'username': 'ableytner@gmx.at',
+        'password': 'Niklas8160',
+        'hideErrors': False 
+    })
+
+    once(bot, 'login')
+    bot.chat('I spawned')
+    return bot
+
 def _version_valid(version):
     if not re.match(r"^/download/1\...?.?.?$", version):
         return False
@@ -115,7 +145,7 @@ def _version_valid(version):
         return False
     if vers_split[1] == 7 and (len(vers_split) < 3 or vers_split[2] < 10):
         return False
-    if ".".join([str(item) for item in vers_split]) in ["1.8"]:
+    if ".".join([str(item) for item in vers_split]) in ["1.8", "1.19"]:
         return False
     
     return True
@@ -153,12 +183,51 @@ def _test_broken_versions():
     os.chdir("testdir")
     vanilla_urls = [
         "https://launcher.mojang.com/v1/objects/050f93c1f3fe9e2052398f7bd6aca10c63d64a87/server.jar",
-        # "https://launcher.mojang.com/v1/objects/a028f00e678ee5c6aef0e29656dca091b5df11c7/server.jar"
+        "https://launcher.mojang.com/v1/objects/a028f00e678ee5c6aef0e29656dca091b5df11c7/server.jar"
     ]
     for vanilla_url in vanilla_urls:
         _test_vanilla_url(vanilla_url)
     _reset_workspace()
     os.chdir("..")
 
+def _test_mineflayer():
+    links = [
+        "https://launcher.mojang.com/v1/objects/3dc3d84a581f14691199cf6831b71ed1296a9fdf/server.jar"
+    ]
+    _setup_workspace()
+    os.chdir("testdir")
+
+    for url in links:
+        _reset_workspace()
+
+        jarfile = _download_file(url)
+        start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
+
+        wrapper = Wrapper(command=start_cmd, output=False)
+        wrapper.startup()
+        assert wrapper.server_running()
+        while not wrapper.output_queue.empty():
+            wrapper.output_queue.get()
+
+        wrapper.send_command("/say Hello World")
+        sleep(1)
+        lines = ""
+        while not wrapper.output_queue.empty():
+            lines += wrapper.output_queue.get()
+        assert "Hello World" in lines
+
+        _connect_mineflayer()
+        sleep(5)
+        lines = ""
+        while not wrapper.output_queue.empty():
+            lines += wrapper.output_queue.get()
+        assert "I spawned" in lines
+
+        wrapper.stop()
+        sleep(5)
+        assert not wrapper.server_running()
+
+    os.chdir("..")
+
 if __name__ == "__main__":
-    test_all_vanilla()
+    _test_mineflayer()

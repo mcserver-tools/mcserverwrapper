@@ -27,7 +27,7 @@ class Server():
 
         # waits if the server gets started for the first time
         while not os.path.isfile("server.properties") or not os.path.isfile("eula.txt"):
-            sleep(1)
+            sleep(0.1)
 
         # read the port from the server.properties file
         with open("server.properties", "r", encoding="utf8") as properties:
@@ -74,7 +74,7 @@ class Server():
 
         # wait for the server to initialize
         while self._child is None:
-            sleep(1)
+            sleep(0.1)
 
         output = b""
         # read one char at a time, until the server exits

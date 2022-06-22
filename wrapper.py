@@ -105,7 +105,7 @@ class Wrapper():
         if "maxp" in self.args:
             for index, line in enumerate(lines):
                 if "max-players=" in line:
-                    lines[index] = f"max-players={self.args['port']}\n"
+                    lines[index] = f"max-players={self.args['maxp']}\n"
 
         with open("./server.properties", "w", encoding="utf8") as properties:
             properties.writelines(lines)

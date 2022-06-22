@@ -13,4 +13,4 @@ if __name__ == "__main__":
     while command != "/stop" and wrapper.server_running():
         command = input()
         wrapper.send_command(command, wait_time=1)
-    sleep(15)
+    sleep(10)
