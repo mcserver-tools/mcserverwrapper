@@ -1,0 +1,6 @@
+requests
+pexpect
+mcstatus
+bs4
+javascript
+pytest
