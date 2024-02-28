@@ -6,46 +6,59 @@ import sys
 from queue import Queue
 from threading import Thread
 from time import sleep
+from typing import Any
 
 from .server import Server
+from . import server_properties_helper
 
-DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
+DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
-    def __init__(self, command="", args=None, server_path=os.getcwd(), output=True) -> None:
-        if args is None:
-            args = {}
-
-        if command != "":
-            self.cmd = command
+    def __init__(self, server_start_command="", server_property_args=None, server_path=None, print_output=True) -> None:
+        if server_start_command != "":
+            self.server_start_command = server_start_command
         elif len(sys.argv) == 2:
-            self.cmd = sys.argv[-1]
+            self.server_start_command = sys.argv[-1]
         else:
-            self.cmd = DEFAULT_START_CMD
+            self.server_start_command = DEFAULT_START_CMD
+        
+        self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
 
-        self.args = args
+        if server_path is None:
+            server_path = os.getcwd()
         self.server_path = server_path
+        self.server = Server(self.server_path)
 
         # delete old logfile
-        if os.path.exists(os.path.join(self.server_path, "mcserverlogs.txt")):
-            os.system(os.path.join(self.server_path, "del mcserverlogs.txt"))
+        logfile_path = os.path.join(self.server_path, "mcserverlogs.txt")
+        if os.path.isfile(logfile_path):
+            os.remove(logfile_path)
 
-        self.server = Server(self.server_path)
-        if output:
-            Thread(target=self._output_reader, daemon=True).start()
-        else:
-            self.output_queue = Queue()
-            Thread(target=self._output_formatter, daemon=True).start()
+        self.output_queue = Queue()
+        Thread(target=self._t_output_handler, args=[print_output,], daemon=True).start()
 
-    def startup(self):
+    def startup(self) -> None:
         """Starts the minecraft server"""
 
-        self._edit_properties()
-        self.server.start(self.cmd, cwd=self.server_path)
+        # if the Server is started for the first time,
+        # create a temp server to create the eula and server.properties
+        if not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
+            self._run_temp_server()
+            # wait for server.properties to generate
+            while not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
+                sleep(0.1)
 
-    def send_command(self, command, wait_time=0):
+        # accept the eula
+        # always accept eula to recover from a previous crash
+        self._accept_eula()
+
+        server_properties_helper.save_properties(self.server_path, self.server_property_args)
+
+        self.server.start(self.server_start_command, cwd=self.server_path)
+
+    def send_command(self, command, wait_time=0) -> None:
         """Sends and executes a command on the server, then waits for the given wait_time"""
 
         if len(command) == 0:
@@ -55,122 +68,55 @@ class Wrapper():
 
         sleep(wait_time)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stops the server"""
 
         self.server.stop()
 
-    def server_running(self):
+    def server_running(self) -> bool:
         """Return True if the server is pingeable"""
 
         return self.server.is_running()
 
-    def _edit_properties(self):
-        """Save the port and max players to the server.properites"""
+    def _run_temp_server(self):
+        """Start a temporary server to generate server.properties and eula.txt"""
 
-        # pylint: disable=W0703
-
-        # if the Server is started for the first time,
-        # create a temp server to create the eula and server.properties
-        if not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
-            tempserver = Server(self.server_path)
-            try:
-                tempserver.start(self.cmd, cwd=self.server_path, blocking=False)
-            except Exception as exc:
-                # some versions only add an empty server.properties,
-                # so just add the port and max players
-                if "Port couldn't be read from server.properties" in exc.args:
-                    self._append_properties()
-                else:
-                    raise exc
-
-            # accept the eula
-            with open(os.path.join(self.server_path, "eula.txt"), "r", encoding="utf8") as file:
-                lines = file.readlines()
-                for index, line in enumerate(lines):
-                    if line == "eula=false\n":
-                        lines[index] = "eula=true\n"
-            with open(os.path.join(self.server_path, "eula.txt"), "w", encoding="utf8") as file:
-                file.writelines(lines)
-
-        # pylint: enable=W0703
-
-        # save the provided port and max players to the server.properties
-        with open(os.path.join(self.server_path, "./server.properties"), "r", encoding="utf8") as properties:
-            lines = properties.readlines()
-
-        if "port" in self.args:
-            for index, line in enumerate(lines):
-                if "server-port=" in line:
-                    lines[index] = f"server-port={self.args['port']}\n"
-        if "maxp" in self.args:
-            for index, line in enumerate(lines):
-                if "max-players=" in line:
-                    lines[index] = f"max-players={self.args['maxp']}\n"
-
-        with open(os.path.join(self.server_path, "./server.properties"), "w", encoding="utf8") as properties:
-            properties.writelines(lines)
-
-    def _append_properties(self):
-        with open(os.path.join(self.server_path, "./server.properties"), "r", encoding="utf8") as properties:
-            lines = properties.readlines()
-        lines.append(f"server-port={self.args['port'] if 'port' in self.args else 25565}\n")
-        lines.append(f"max-players={self.args['maxp'] if 'maxp' in self.args else 20}\n")
-        with open(os.path.join(self.server_path, "./server.properties"), "w", encoding="utf8") as properties:
-            properties.writelines(lines)
-
-    def _output_reader(self):
-        """Print out all of the server logs"""
-
-        for item in self.server.read_output():
-            self._format_text(item, True)
-
-    def _output_formatter(self):
-        """Save all of the output lines to the queue"""
-
-        for item in self.server.read_output():
-            lines = self._format_text(item, False)
-            if lines is not None:
-                for line in lines:
-                    if line is not None and line != "":
-                        self.output_queue.put(line)
-
-    def _format_text(self, output, printout):
-        """Format the given text"""
-
-        # try to decode the output string
+        tempserver = Server(self.server_path)
         try:
-            output_str = output.decode("ascii").replace("\n", "")
-        # if the total decoding fails, decode every char individually
-        except UnicodeDecodeError:
-            output_str = ""
-            for char in [output[i:i+1] for i in range(len(output))]:
-                try:
-                    output_str += char.decode("ascii")
-                # if the conversion fails, skip the char
-                except UnicodeDecodeError:
-                    pass
-                except AttributeError:
-                    pass
-            output_str = output_str.replace("\n", "")
+            tempserver.start(self.server_start_command, cwd=self.server_path, blocking=False)
+        except ValueError:
+            # some versions only add an empty server.properties,
+            # so just add the port and max players later
+            pass
+    
+    def _accept_eula(self):
+        """Accept eula.txt"""
 
-        # ignore empty output strings to prevent empty lines
-        if output_str != "":
-            # in print mode, print the output string
-            if printout:
-                # print each line individually if it isn't empty
-                for item in output_str.split("\r"):
-                    if item != "":
-                        print(item)
-                with open(os.path.join(self.server_path, "mcserverlogs.txt"), "a", encoding="utf8") as logfile:
-                    logfile.write(output_str.replace("\r", "\n"))
-            # if not in print mode, return all lines as a list
-            else:
-                return output_str.split("\r")
-        return None
+        with open(os.path.join(self.server_path, "eula.txt"), "r", encoding="utf8") as file:
+            lines = file.readlines()
+            for index, line in enumerate(lines):
+                if line == "eula=false\n":
+                    lines[index] = "eula=true\n"
+        with open(os.path.join(self.server_path, "eula.txt"), "w", encoding="utf8") as file:
+            file.writelines(lines)
+
+    def _t_output_handler(self, print_output=False):
+        """Read all output, write to logfile and print if print_output is True"""
+
+        for line in self.server.read_output():
+            if line != "":
+                self._log(line)
+                if print_output:
+                    print(line)
+                else:
+                    self.output_queue.put(line)
+
+    def _log(self, msg: str):
+        with open(os.path.join(self.server_path, "mcserverlogs.txt"), "a", encoding="utf8") as logfile:
+            logfile.write(str(msg) + "\n")
 
 # teststartcommand:
-# mcserverwrapper -jar paper-1.18.2-277.jar -java java -ram 8G -port 25566 -maxp 5
+# mcserverwrapper -jar server.jar -java java -ram 8G -port 25566 -maxp 5
 
 # Valid arguments:
 # -java: the path to the java.exe executable (default: java)

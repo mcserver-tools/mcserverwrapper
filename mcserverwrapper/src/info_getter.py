@@ -4,7 +4,7 @@ from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 
 def ping_address_with_return(address, port) -> PingResponse | None:
-    """Pings a given address/port combo and returns the result"""
+    """Pings a given address/port combination and returns the result or None"""
 
     if isinstance(port, str):
         port = int(port)
