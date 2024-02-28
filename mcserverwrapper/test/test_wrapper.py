@@ -74,37 +74,6 @@ def _test_all_vanilla():
     print(f"{working}/{failed + working} versions passed, " + \
           f"{len(urls) - (failed + working)} remaining")
 
-def _test_vanilla_url(url):
-    _reset_workspace()
-
-    jarfile = _download_file(url)
-    start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
-
-    wrapper = Wrapper(command=start_cmd, output=False, server_path=os.path.join(os.getcwd(), "testdir"))
-    wrapper.startup()
-    assert wrapper.server_running()
-    while not wrapper.output_queue.empty():
-        wrapper.output_queue.get()
-
-    wrapper.send_command("/say Hello World")
-    sleep(1)
-    lines = ""
-    while not wrapper.output_queue.empty():
-        lines += wrapper.output_queue.get()
-    assert "Hello World" in lines
-
-    bot = _connect_mineflayer()
-    if bot is not None:
-        sleep(5)
-        lines = ""
-        while not wrapper.output_queue.empty():
-            lines += wrapper.output_queue.get()
-        assert "I spawned" in lines
-
-    wrapper.stop()
-    sleep(5)
-    assert not wrapper.server_running()
-
 def _get_vanilla_urls():
     """Function written by @Pfefan"""
 
@@ -129,6 +98,37 @@ def _get_vanilla_urls():
 
     print(f"Found {counter:3.0f} vanilla version urls")
     return links
+
+def _test_vanilla_url(url):
+    _reset_workspace()
+
+    jarfile = _download_file(url)
+    start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
+
+    wrapper = Wrapper(server_start_command=start_cmd, print_output=False, server_path=os.path.join(os.getcwd(), "testdir"))
+    wrapper.startup()
+    assert wrapper.server_running()
+    while not wrapper.output_queue.empty():
+        wrapper.output_queue.get()
+
+    wrapper.send_command("/say Hello World")
+    sleep(1)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "Hello World" in lines
+
+    bot = _connect_mineflayer()
+    if bot is not None:
+        sleep(5)
+        lines = ""
+        while not wrapper.output_queue.empty():
+            lines += wrapper.output_queue.get()
+        assert "I spawned" in lines
+
+    wrapper.stop()
+    sleep(5)
+    assert not wrapper.server_running()
 
 def _connect_mineflayer(address = "127.0.0.1", port = 25565):
     with open("password.txt", "r") as f:
@@ -179,7 +179,7 @@ def _download_file(url, counter=""):
     filename_split = url.rsplit('/', maxsplit=1)[1].split(".")
     local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
     req = requests.get(url)
-    with open(os.path.join( "testdir", local_filename), 'wb') as file:
+    with open(os.path.join("testdir", local_filename), 'wb') as file:
         file.write(req.content)
     return local_filename
 
@@ -195,17 +195,14 @@ def _reset_workspace():
             shutil.rmtree(os.path.join("testdir", entry))
 
 def _download_all_jars():
-    os.chdir("testdir")
     urls = _get_vanilla_urls()
     for index, url in enumerate(urls):
         _download_file(url, str(index))
         print(f"Downloaded {index+1:3.0f}/{len(urls)} vanilla versions", end="\r")
     print(f"Downloaded {len(urls):3.0f}/{len(urls)} vanilla versions")
-    os.chdir("..")
 
 def _test_broken_versions():
     _setup_workspace()
-    os.chdir("testdir")
     vanilla_urls = [
         "https://launcher.mojang.com/v1/objects/050f93c1f3fe9e2052398f7bd6aca10c63d64a87/server.jar",
         "https://launcher.mojang.com/v1/objects/a028f00e678ee5c6aef0e29656dca091b5df11c7/server.jar",
@@ -214,7 +211,6 @@ def _test_broken_versions():
     for vanilla_url in vanilla_urls:
         _test_vanilla_url(vanilla_url)
     _reset_workspace()
-    os.chdir("..")
 
 def test_mineflayer():
     links = [
@@ -228,7 +224,7 @@ def test_mineflayer():
         jarfile = _download_file(url)
         start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
-        wrapper = Wrapper(command=start_cmd, output=False, server_path=os.path.join(os.getcwd(), "testdir"))
+        wrapper = Wrapper(server_start_command=start_cmd, print_output=False, server_path=os.path.join(os.getcwd(), "testdir"))
         wrapper.startup()
         assert wrapper.server_running()
         while not wrapper.output_queue.empty():

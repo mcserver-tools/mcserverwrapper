@@ -27,6 +27,10 @@ class Server():
         # starts the server process
         self._child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
 
+        # wait for files to get generated
+        while not os.path.isfile(os.path.join(self._server_path, "./server.properties")) or not os.path.isfile(os.path.join(self._server_path, "eula.txt")):
+            sleep(0.1)
+
         # read the port from the server.properties file
         self._read_port_from_properties()
 
