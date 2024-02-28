@@ -5,7 +5,7 @@ from multiprocessing import Process
 from time import sleep
 from datetime import datetime, timedelta
 
-from .helpers import _download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, reset_workspace, run_test_vanilla_url
+from .helpers import _download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, reset_workspace, test_vanilla_url
 
 from mcserverwrapper.src.wrapper import Wrapper
 
@@ -25,7 +25,7 @@ def test_all_vanilla():
         print(f"{working}/{failed + working} versions passed, " + \
               f"{len(urls) - (failed + working)} remaining", end="\r")
         try:
-            proc = Process(target=run_test_vanilla_url, args=[url,True,], daemon=True)
+            proc = Process(target=test_vanilla_url, args=[url,True,], daemon=True)
             proc.start()
 
             allowed_time = timedelta(minutes=5)
@@ -88,7 +88,7 @@ def _test_broken_versions():
         "https://launcher.mojang.com/v1/objects/952438ac4e01b4d115c5fc38f891710c4941df29/server.jar"
     ]
     for vanilla_url in vanilla_urls:
-        run_test_vanilla_url(vanilla_url)
+        test_vanilla_url(vanilla_url)
     reset_workspace()
 
 def test_single_vanilla():
@@ -97,7 +97,7 @@ def test_single_vanilla():
         "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
     ]
     for vanilla_url in urls:
-        run_test_vanilla_url(vanilla_url, offline_mode=True)
+        test_vanilla_url(vanilla_url, offline_mode=True)
     reset_workspace()
 
 def test_mineflayer():

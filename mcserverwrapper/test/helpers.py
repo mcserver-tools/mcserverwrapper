@@ -7,6 +7,7 @@ import re
 from time import sleep
 from bs4 import BeautifulSoup
 import requests
+import pytest
 
 from javascript import require, On, Once, AsyncTask, once, off
 
@@ -24,7 +25,8 @@ def reset_workspace():
         else:
             shutil.rmtree(os.path.join("testdir", entry))
 
-def run_test_vanilla_url(url, offline_mode=False):
+@pytest.mark.skip(reason="wrongly detected as a test")
+def test_vanilla_url(url, offline_mode=False):
     reset_workspace()
 
     jarfile = _download_file(url)
