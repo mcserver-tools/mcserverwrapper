@@ -58,6 +58,10 @@ class Server():
 
         self._child.sendline(command)
 
+        if command == "/stop":
+            while not os.access(os.path.join(self._server_path, "world", "session.lock"), os.R_OK):
+                sleep(0.1)
+
     def is_running(self):
         """Returns True if the server responds to a ping"""
 

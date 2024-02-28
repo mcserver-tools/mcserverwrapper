@@ -12,6 +12,7 @@ from .server import Server
 from . import server_properties_helper
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
+LOGFILE_NAME = "mcserverwrapper.log"
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
@@ -32,7 +33,7 @@ class Wrapper():
         self.server = Server(self.server_path)
 
         # delete old logfile
-        logfile_path = os.path.join(self.server_path, "mcserverlogs.txt")
+        logfile_path = os.path.join(self.server_path, LOGFILE_NAME)
         if os.path.isfile(logfile_path):
             os.remove(logfile_path)
 
@@ -46,9 +47,6 @@ class Wrapper():
         # create a temp server to create the eula and server.properties
         if not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
             self._run_temp_server()
-            # wait for server.properties to generate
-            while not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
-                sleep(0.1)
 
         # accept the eula
         # always accept eula to recover from a previous crash
@@ -112,7 +110,7 @@ class Wrapper():
                     self.output_queue.put(line)
 
     def _log(self, msg: str):
-        with open(os.path.join(self.server_path, "mcserverlogs.txt"), "a", encoding="utf8") as logfile:
+        with open(os.path.join(self.server_path, LOGFILE_NAME), "a", encoding="utf8") as logfile:
             logfile.write(str(msg) + "\n")
 
 # teststartcommand:
