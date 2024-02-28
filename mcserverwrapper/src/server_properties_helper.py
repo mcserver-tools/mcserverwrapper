@@ -2,10 +2,11 @@ import os
 from typing import Any
 
 # how many different property args are allowed
-PROPERTY_ARGS_COUNT = 2
+PROPERTY_ARGS_COUNT = 3
 
 DEFAULT_PORT = 25565
 DEFAULT_MAX_PLAYERS = 20
+DEFAULT_ONLINE_MODE = "true"
 
 def parse_properties_args(server_path: str, server_property_args: dict | None) -> dict[str, Any]:
     """Parse the given server_properties_args and provide defaults for missing values"""
@@ -34,12 +35,19 @@ def parse_properties_args(server_path: str, server_property_args: dict | None) -
                     maxp_string = line.split("=")[1]
                     if maxp_string.isdecimal():
                         server_property_args["maxp"] = int(maxp_string)
+        
+        if "onli" not in server_property_args:
+            for line in lines:
+                if "online-mode=" in line:
+                    server_property_args["onli"] = line.split("=")[1]
     
     # fall back to default values
     if not "port" in server_property_args:
         server_property_args["port"] = DEFAULT_PORT
     if not "maxp" in server_property_args:
         server_property_args["maxp"] = DEFAULT_MAX_PLAYERS
+    if not "onli" in server_property_args:
+        server_property_args["onli"] = DEFAULT_ONLINE_MODE
 
     return server_property_args
 
@@ -60,11 +68,15 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
             lines[index] = f"server-port={server_property_args['port']}\n"
         if "max-players=" in line:
             lines[index] = f"max-players={server_property_args['maxp']}\n"
+        if "online-mode=" in line:
+            lines[index] = f"online-mode={server_property_args['onli']}\n"
     
     if "server-port=" not in lines:
         lines.append(f"server-port={server_property_args['port']}\n")
     if "max-players=" not in lines:
         lines.append(f"max-players={server_property_args['maxp']}\n")
+    if "online-mode=" not in lines:
+        lines.append(f"online-mode={server_property_args['onli']}\n")
 
     with open(props_path, "w", encoding="utf8") as properties:
         properties.writelines(lines)
@@ -76,7 +88,7 @@ def _validate_property_args(server_property_args: dict[str, Any]):
         raise ValueError(f"Incorrect length of elements '{len(server_property_args)}'" + \
                          f" for server_property_args, expected '{PROPERTY_ARGS_COUNT}'")
     
-    required_keys = ["port", "maxp"]
+    required_keys = ["port", "maxp", "onli"]
     for k in required_keys:
         if not k in server_property_args:
             raise KeyError(f"Missing key '{k}' in server_property_property_args")
