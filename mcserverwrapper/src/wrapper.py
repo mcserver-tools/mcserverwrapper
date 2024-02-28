@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 
-from server import Server
+from .server import Server
 
 DEFAULT_START_CMD = "java -Xmx4G -jar server.jar nogui"
 

@@ -1,0 +1,2 @@
+include mcserverwrapper/tests/pytest.ini
+recursive-include mcserverwrapper/test *.py

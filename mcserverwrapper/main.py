@@ -3,7 +3,7 @@
 import os
 from time import sleep
 
-from wrapper import Wrapper
+from mcserverwrapper.src.wrapper import Wrapper
 
 # pylint: disable=C0103
 

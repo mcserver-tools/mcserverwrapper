@@ -8,7 +8,7 @@ from time import sleep
 import pexpect
 from pexpect import popen_spawn
 
-import info_getter
+from . import info_getter
 
 class Server():
     """The core of the wrapper, communicates directly with the minecraft servers"""
