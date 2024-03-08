@@ -1,5 +1,6 @@
 """A module ocntining the server class"""
 
+import _thread
 import os.path
 import re
 from datetime import datetime, timedelta
@@ -16,13 +17,13 @@ from . import info_getter, logger
 class Server():
     """The core of the wrapper, communicates directly with the minecraft servers"""
 
-    def __init__(self, server_path: str) -> None:
+    def __init__(self, server_path: str, exit_program_on_error=False) -> None:
         self._server_path = server_path
         self._child = None
         self._port = None
         self._version = None
         self._version_type = None
-        self._watchdog = Thread(target=self._t_watchdog, daemon=True)
+        self._watchdog = Thread(target=self._t_watchdog, args=[exit_program_on_error,], daemon=True)
 
     def start(self, command, cwd=None, blocking=True):
         """Starts the minecraft server"""
@@ -67,6 +68,7 @@ class Server():
         if command == "/stop":
             while not os.access(os.path.join(self._server_path, "world", "session.lock"), os.R_OK):
                 sleep(0.1)
+            sleep(1)
 
     def get_child_status(self, timeout: int) -> int | None:
         try:
@@ -202,7 +204,7 @@ class Server():
         else:
             self._version_type = "unknown"
 
-    def _t_watchdog(self):
+    def _t_watchdog(self, exit_program_on_error):
         while (True):
             status = self.get_child_status(1)
             # server startup failed
@@ -212,4 +214,7 @@ class Server():
                 for line in self.read_output(3):
                     logger.log(line)
                 logger.log("Server has crashed, exiting...")
-                os._exit(1)
+                if exit_program_on_error:
+                    os._exit(1)
+                else:
+                    _thread.interrupt_main()

@@ -16,14 +16,14 @@ LOGFILE_NAME = "mcserverwrapper.log"
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
-    def __init__(self, server_start_command="", server_property_args=None, server_path=None, print_output=True) -> None:
+    def __init__(self, server_start_command=None, server_property_args=None, server_path=None, print_output=True, exit_program_on_error=False) -> None:
         if server_path is None:
             server_path = os.getcwd()
         self.server_path = server_path
 
         logger.setup(server_path, LOGFILE_NAME)
 
-        if server_start_command != "":
+        if server_start_command is not None:
             self.server_start_command = server_start_command
         elif len(sys.argv) == 2:
             self.server_start_command = sys.argv[-1]
@@ -31,8 +31,10 @@ class Wrapper():
             self.server_start_command = DEFAULT_START_CMD
 
         self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
+        
+        self._exit_program_on_error = exit_program_on_error
 
-        self.server = Server(self.server_path)
+        self.server = Server(self.server_path, exit_program_on_error=self._exit_program_on_error)
 
         # delete old logfile
         logger.delete_logs()
@@ -40,7 +42,7 @@ class Wrapper():
         self.output_queue = Queue()
         Thread(target=self._t_output_handler, args=[print_output,], daemon=True).start()
 
-    def startup(self) -> None:
+    def startup(self, blocking=True) -> None:
         """Starts the minecraft server"""
 
         # if the Server is started for the first time,
@@ -54,7 +56,7 @@ class Wrapper():
 
         server_properties_helper.save_properties(self.server_path, self.server_property_args)
 
-        self.server.start(self.server_start_command, cwd=self.server_path)
+        self.server.start(self.server_start_command, cwd=self.server_path, blocking=blocking)
 
     def send_command(self, command, wait_time=0) -> None:
         """Sends and executes a command on the server, then waits for the given wait_time"""
@@ -76,13 +78,10 @@ class Wrapper():
 
         return self.server.is_running()
 
-    def _test_start_cmd(self):
-        """Test if the star command works"""
-
     def _run_temp_server(self):
         """Start a temporary server to generate server.properties and eula.txt"""
 
-        tempserver = Server(self.server_path)
+        tempserver = Server(self.server_path, exit_program_on_error=self._exit_program_on_error)
         try:
             tempserver.start(self.server_start_command, cwd=self.server_path, blocking=False)
         except ValueError:
