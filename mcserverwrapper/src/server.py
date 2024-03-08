@@ -2,6 +2,8 @@
 
 import os.path
 import re
+from datetime import datetime, timedelta
+from subprocess import TimeoutExpired
 from threading import Thread
 from time import sleep
 from typing import Generator
@@ -9,7 +11,7 @@ from typing import Generator
 import pexpect
 from pexpect import popen_spawn
 
-from . import info_getter
+from . import info_getter, logger
 
 class Server():
     """The core of the wrapper, communicates directly with the minecraft servers"""
@@ -20,6 +22,7 @@ class Server():
         self._port = None
         self._version = None
         self._version_type = None
+        self._watchdog = Thread(target=self._t_watchdog, daemon=True)
 
     def start(self, command, cwd=None, blocking=True):
         """Starts the minecraft server"""
@@ -27,8 +30,11 @@ class Server():
         # starts the server process
         self._child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
 
-        # wait for files to get generated
-        while not os.path.isfile(os.path.join(self._server_path, "./server.properties")) or not os.path.isfile(os.path.join(self._server_path, "eula.txt")):
+        # starts the server watchdog
+        self._watchdog.start()
+
+        # wait for files to get generated or server to exit
+        while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) or not os.path.isfile(os.path.join(self._server_path, "eula.txt"))):
             sleep(0.1)
 
         # read the port from the server.properties file
@@ -62,6 +68,15 @@ class Server():
             while not os.access(os.path.join(self._server_path, "world", "session.lock"), os.R_OK):
                 sleep(0.1)
 
+    def get_child_status(self, timeout: int) -> int | None:
+        try:
+            status = self._child.proc.wait(timeout)
+            # server stopped
+            return status
+        except TimeoutExpired:
+            # expected exception, server is running correctly
+            return None
+
     def is_running(self):
         """Returns True if the server responds to a ping"""
 
@@ -70,8 +85,16 @@ class Server():
 
         return info_getter.ping_address_with_return("127.0.0.1", self._port) is not None
 
-    def read_output(self) -> Generator[str, None, None]:
+    def read_output(self, timeout=None) -> Generator[str, None, None]:
         """Returns a generator which yields all outputs until the server exits"""
+
+        if timeout is None:
+            terminate_time = datetime.max
+        else:
+            terminate_time = datetime.now() + timedelta(seconds=timeout)
+            if not isinstance(timeout, (int, float)):
+                raise TypeError(f"timeout expected type (int, float), not {type(timeout)}")
+            
 
         # wait for the server to initialize
         while self._child is None:
@@ -79,7 +102,7 @@ class Server():
 
         output = b""
         # read one char at a time, until the server exits
-        while b"Stopping server" not in output:
+        while b"Stopping server" not in output and terminate_time > datetime.now():
             try:
                 output += bytes(self._child.read(1))
                 # if a line break is in the output, return line
@@ -178,3 +201,15 @@ class Server():
             self._version_type = "bukkit"
         else:
             self._version_type = "unknown"
+
+    def _t_watchdog(self):
+        while (True):
+            status = self.get_child_status(1)
+            # server startup failed
+            # ignore status 0, this means that the eula is not accepted
+            if status != None and status != 0:
+                sleep(1)
+                for line in self.read_output(3):
+                    logger.log(line)
+                logger.log("Server has crashed, exiting...")
+                os._exit(1)

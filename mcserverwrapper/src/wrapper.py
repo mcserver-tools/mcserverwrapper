@@ -6,10 +6,9 @@ import sys
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Any
 
 from .server import Server
-from . import server_properties_helper
+from . import logger, server_properties_helper
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
 LOGFILE_NAME = "mcserverwrapper.log"
@@ -18,24 +17,25 @@ class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
     def __init__(self, server_start_command="", server_property_args=None, server_path=None, print_output=True) -> None:
+        if server_path is None:
+            server_path = os.getcwd()
+        self.server_path = server_path
+
+        logger.setup(server_path, LOGFILE_NAME)
+
         if server_start_command != "":
             self.server_start_command = server_start_command
         elif len(sys.argv) == 2:
             self.server_start_command = sys.argv[-1]
         else:
             self.server_start_command = DEFAULT_START_CMD
-        
+
         self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
 
-        if server_path is None:
-            server_path = os.getcwd()
-        self.server_path = server_path
         self.server = Server(self.server_path)
 
         # delete old logfile
-        logfile_path = os.path.join(self.server_path, LOGFILE_NAME)
-        if os.path.isfile(logfile_path):
-            os.remove(logfile_path)
+        logger.delete_logs()
 
         self.output_queue = Queue()
         Thread(target=self._t_output_handler, args=[print_output,], daemon=True).start()
@@ -76,6 +76,9 @@ class Wrapper():
 
         return self.server.is_running()
 
+    def _test_start_cmd(self):
+        """Test if the star command works"""
+
     def _run_temp_server(self):
         """Start a temporary server to generate server.properties and eula.txt"""
 
@@ -103,15 +106,9 @@ class Wrapper():
 
         for line in self.server.read_output():
             if line != "":
-                self._log(line)
-                if print_output:
-                    print(line)
-                else:
+                logger.log(line, print_output)
+                if not print_output:
                     self.output_queue.put(line)
-
-    def _log(self, msg: str):
-        with open(os.path.join(self.server_path, LOGFILE_NAME), "a", encoding="utf8") as logfile:
-            logfile.write(str(msg) + "\n")
 
 # teststartcommand:
 # mcserverwrapper -jar server.jar -java java -ram 8G -port 25566 -maxp 5
