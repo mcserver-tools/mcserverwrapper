@@ -65,7 +65,7 @@ class Wrapper():
 
         if len(command) == 0:
             return
-        
+
         if command == "stop":
             return
 
