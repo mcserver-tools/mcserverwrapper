@@ -1,7 +1,7 @@
 # pylint: disable=unused-wildcard-import
 # pylint: disable=wildcard-import
 # Needed for making pytest fixtures working correctly
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position, unused-import
 
 """
     Pytest configuration
@@ -19,4 +19,5 @@ test_files_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
 if not os.path.isdir(test_files_path):
     os.mkdir(test_files_path)
 
+from .fixtures import newest_server_jar
 #pylint: enable=wrong-import-position

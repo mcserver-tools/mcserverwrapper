@@ -5,9 +5,11 @@ from multiprocessing import Process
 from time import sleep
 from datetime import datetime, timedelta
 
+import pytest
+
 from mcserverwrapper import Wrapper
-from .helpers import _download_file, connect_mineflayer, get_vanilla_urls, setup_workspace,\
-                     reset_workspace, test_vanilla_url
+from .helpers import download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
+                     reset_workspace, run_vanilla_test_url, run_vanilla_test
 
 def test_all_vanilla():
     """Tests all of the vanilla minecraft versions"""
@@ -25,7 +27,7 @@ def test_all_vanilla():
         print(f"{working}/{failed + working} versions passed, " + \
               f"{len(urls) - (failed + working)} remaining", end="\r")
         try:
-            proc = Process(target=test_vanilla_url, args=[url,True,], daemon=True)
+            proc = Process(target=run_vanilla_test_url, args=[url,True,], daemon=True)
             proc.start()
 
             allowed_time = timedelta(minutes=5)
@@ -74,7 +76,7 @@ def test_download_all_jars():
     urls = get_vanilla_urls()
     c = 0
     for url in [item[0] for item in urls]:
-        _download_file(url, str(c))
+        download_file(url, str(c))
         print(f"Downloaded {c+1:3.0f}/{len(urls)} vanilla versions", end="\r")
         c += 1
     print(f"Downloaded {len(urls):3.0f}/{len(urls)} vanilla versions")
@@ -89,59 +91,57 @@ def _test_broken_versions():
         "https://launcher.mojang.com/v1/objects/952438ac4e01b4d115c5fc38f891710c4941df29/server.jar"
     ]
     for vanilla_url in vanilla_urls:
-        test_vanilla_url(vanilla_url)
+        run_vanilla_test_url(vanilla_url)
     reset_workspace()
 
-def test_single_vanilla():
+def test_single_vanilla(newest_server_jar):
     """Test a single vanilla server version"""
 
-    setup_workspace()
-    urls = [
-        "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
-    ]
-    for vanilla_url in urls:
-        test_vanilla_url(vanilla_url, offline_mode=True)
-    reset_workspace()
+    run_vanilla_test(newest_server_jar)
 
-def test_mineflayer():
+def test_single_vanilla_offline(newest_server_jar):
+    """Test a single vanilla server version in offline mode"""
+
+    run_vanilla_test(newest_server_jar, offline_mode=True)
+
+def test_mineflayer(newest_server_jar):
     """Test the mineflayer bot"""
 
-    links = [
-        "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
-    ]
-    setup_workspace()
+    start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
-    for url in links:
-        reset_workspace()
+    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
+                      server_path=os.path.join(os.getcwd(), "testdir"))
+    wrapper.startup()
+    assert wrapper.server_running()
+    while not wrapper.output_queue.empty():
+        wrapper.output_queue.get()
 
-        jarfile = _download_file(url)
-        start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
+    wrapper.send_command("/say Hello World")
+    sleep(1)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "Hello World" in lines
 
-        wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                          server_path=os.path.join(os.getcwd(), "testdir"))
+    connect_mineflayer()
+    sleep(5)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "I spawned" in lines
+
+    wrapper.stop()
+    assert not wrapper.server_running()
+
+def test_invalid_start_params(newest_server_jar):
+    """Test a server with an invalid startup command"""
+
+    start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"
+
+    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
+                      server_path=os.path.join(os.getcwd(), "testdir"))
+    with pytest.raises(KeyboardInterrupt):
         wrapper.startup()
-        assert wrapper.server_running()
-        while not wrapper.output_queue.empty():
-            wrapper.output_queue.get()
-
-        wrapper.send_command("/say Hello World")
-        sleep(1)
-        lines = ""
-        while not wrapper.output_queue.empty():
-            lines += wrapper.output_queue.get()
-        assert "Hello World" in lines
-
-        connect_mineflayer()
-        sleep(5)
-        lines = ""
-        while not wrapper.output_queue.empty():
-            lines += wrapper.output_queue.get()
-        assert "I spawned" in lines
-
-        wrapper.stop()
-        sleep(5)
-        assert not wrapper.server_running()
-    reset_workspace()
 
 if __name__ == "__main__":
     test_all_vanilla()

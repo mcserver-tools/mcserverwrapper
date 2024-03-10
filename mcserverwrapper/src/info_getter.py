@@ -1,5 +1,7 @@
 """A module containing the ping_address_with_return function"""
 
+from __future__ import annotations
+
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 

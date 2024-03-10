@@ -1,5 +1,7 @@
 """Module providing methods for managing the server.properties"""
 
+from __future__ import annotations
+
 import os
 from typing import Any
 

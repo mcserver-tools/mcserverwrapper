@@ -1,6 +1,7 @@
 .vscode/
 venv/
 testdir/
+testdir_persistent/
 __pycache__/
 mcserverwrapper/test/temp/
 *.egg-info/

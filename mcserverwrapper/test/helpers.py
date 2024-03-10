@@ -9,18 +9,19 @@ import re
 from time import sleep
 from bs4 import BeautifulSoup
 import requests
-import pytest
 
 from javascript import require, once
 
-from mcserverwrapper.src.wrapper import Wrapper
+from mcserverwrapper import Wrapper
+
 mineflayer = require('mineflayer')
 
 def setup_workspace():
     """Setup the testing folder"""
 
-    if not os.path.isdir("testdir"):
-        os.mkdir("testdir")
+    if os.path.isdir("testdir"):
+        shutil.rmtree("testdir")
+    os.makedirs("testdir", exist_ok=True)
 
 def reset_workspace():
     """Delete everything inside the testing folder"""
@@ -31,13 +32,18 @@ def reset_workspace():
         else:
             shutil.rmtree(os.path.join("testdir", entry))
 
-@pytest.mark.skip(reason="wrongly detected as a test")
-def test_vanilla_url(url, offline_mode=False):
-    """Run all tests for a single vanilla minecraft server"""
+def run_vanilla_test_url(url, offline_mode=False):
+    """Run all tests for a single vanilla minecraft server url"""
 
     reset_workspace()
 
-    jarfile = _download_file(url)
+    jarfile = download_file(url)
+
+    run_vanilla_test(jarfile, offline_mode)
+
+def run_vanilla_test(jarfile, offline_mode=False):
+    """Run all tests for a single vanilla minecraft server jar"""
+
     start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
     server_property_args = None
@@ -51,6 +57,7 @@ def test_vanilla_url(url, offline_mode=False):
                       server_property_args=server_property_args)
     wrapper.startup()
     assert wrapper.server_running()
+
     while not wrapper.output_queue.empty():
         wrapper.output_queue.get()
 
@@ -62,15 +69,15 @@ def test_vanilla_url(url, offline_mode=False):
     assert "Hello World" in lines
 
     bot = connect_mineflayer(offline_mode=offline_mode)
-    if bot is not None:
-        sleep(5)
-        lines = ""
-        while not wrapper.output_queue.empty():
-            lines += wrapper.output_queue.get()
-        assert "I spawned" in lines
+    assert bot is not None
+
+    sleep(5)
+    lines = ""
+    while not wrapper.output_queue.empty():
+        lines += wrapper.output_queue.get()
+    assert "I spawned" in lines
 
     wrapper.stop()
-    sleep(2)
     assert not wrapper.server_running()
 
 def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
@@ -113,6 +120,16 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 
     return bot
 
+def download_file(url, counter=""):
+    """Download the file from the given url and return its path"""
+
+    filename_split = url.rsplit('/', maxsplit=1)[1].split(".")
+    local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
+    req = requests.get(url, timeout=5)
+    with open(os.path.join("testdir", local_filename), 'wb') as file:
+        file.write(req.content)
+    return local_filename
+
 def get_vanilla_urls():
     """Function written by @Pfefan"""
 
@@ -152,11 +169,3 @@ def _version_valid(version):
         return False
 
     return True
-
-def _download_file(url, counter=""):
-    filename_split = url.rsplit('/', maxsplit=1)[1].split(".")
-    local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
-    req = requests.get(url, timeout=5)
-    with open(os.path.join("testdir", local_filename), 'wb') as file:
-        file.write(req.content)
-    return local_filename

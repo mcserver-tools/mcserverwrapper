@@ -1,5 +1,7 @@
 """A module ocntining the server class"""
 
+from __future__ import annotations
+
 import _thread
 import os.path
 import re
@@ -100,35 +102,24 @@ class Server():
             if not isinstance(timeout, (int, float)):
                 raise TypeError(f"timeout expected type (int, float), not {type(timeout)}")
 
-
         # wait for the server to initialize
         while self._child is None:
             sleep(0.1)
 
         output = b""
-        # read one char at a time, until the server exits
-        while b"Stopping server" not in output and terminate_time > datetime.now():
-            try:
-                output += bytes(self._child.read(1))
-                # if a line break is in the output, return line
-                if b"\r" in output:
-                    yield self._format_output(output)
-                    output = b""
-            # Exception Normal: on timeout retry until a new char can be read
-            except pexpect.exceptions.TIMEOUT:
-                pass
-        yield self._format_output(output)
-
-        output = b""
         empties = 0
-        while True:
+        # read one char at a time, until the server exits
+        while terminate_time > datetime.now():
             try:
-                char = self._child.read(1)
-                if char == b"":
+                output_char = bytes(self._child.read(1))
+
+                if output == b"":
                     empties += 1
                 else:
                     empties = 0
-                output += char
+
+                output += output_char
+
                 # if a line break is in the output, return line
                 if b"\r" in output:
                     yield self._format_output(output)
@@ -136,12 +127,15 @@ class Server():
                 # if more than 10 empty chars have been read, all data has been read
                 if empties >= 10:
                     return self._format_output(output)
+
             # Exception Normal: on timeout retry until a new char can be read
             except pexpect.exceptions.TIMEOUT:
                 pass
             # If the End of File is read, all data has been read
             except pexpect.exceptions.EOF:
                 return self._format_output(output)
+
+        return ""
 
     def _read_port_from_properties(self):
         """Reads and stores the port from the server.properties file"""
@@ -208,16 +202,41 @@ class Server():
             self._version_type = "unknown"
 
     def _t_watchdog(self, exit_program_on_error):
-        while True:
-            status = self.get_child_status(1)
-            # server startup failed
-            # ignore status 0, this means that the eula is not accepted
-            if status in (None, 0):
-                sleep(1)
-                for line in self.read_output(3):
-                    logger.log(line)
-                logger.log("Server has crashed, exiting...")
-                if exit_program_on_error:
-                    os._exit(1)
+        has_started = False
+        ping_timeouts = 0
+        exit_watchdog = False
+
+        while not exit_watchdog:
+            if not has_started:
+                status = self.get_child_status(1)
+
+                # server startup failed
+                if status is not None:
+                    # exit watchdog on status 0, this means that the eula is not accepted
+                    if status == 0:
+                        exit_watchdog = True
+                    else:
+                        self._t_exit(exit_program_on_error)
+                        return
+                has_started = self.is_running()
+
+            if False and has_started and not self.is_running(): # pylint: disable=R1727
+                if ping_timeouts > 5:
+                    # return self._t_exit(exit_program_on_error)
+                    pass
                 else:
-                    _thread.interrupt_main()
+                    ping_timeouts += 1
+                    logger.log(f"server ping timed out {ping_timeouts} in a row")
+                    sleep(5)
+            else:
+                ping_timeouts = 0
+
+    def _t_exit(self, exit_program_on_error):
+        sleep(3)
+        for line in self.read_output(3):
+            logger.log(line)
+        logger.log("Server has crashed, exiting...")
+        if exit_program_on_error:
+            os._exit(1)
+        else:
+            _thread.interrupt_main()
