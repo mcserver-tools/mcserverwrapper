@@ -10,6 +10,8 @@ import os
 import sys
 import pathlib
 
+from pytest import Metafunc
+
 # Adding source path to sys path
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../'))
 sys.path.append(f"{pathlib.Path(__file__).parent.parent}")
@@ -20,4 +22,15 @@ if not os.path.isdir(test_files_path):
     os.mkdir(test_files_path)
 
 from .fixtures import newest_server_jar
+
+from .helpers import get_vanilla_urls
 #pylint: enable=wrong-import-position
+
+def pytest_generate_tests(metafunc: Metafunc):
+    """Pytest hook"""
+
+    if "jar_version_tuple" in metafunc.fixturenames:
+        urls = get_vanilla_urls()
+        metafunc.parametrize(argnames="jar_version_tuple",
+                             argvalues=urls,
+                             ids=[f"test_version_{url[1]}" for url in urls])

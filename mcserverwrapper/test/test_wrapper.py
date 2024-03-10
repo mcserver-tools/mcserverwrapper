@@ -69,31 +69,29 @@ def _test_all_vanilla_cli():
     print(f"{working}/{failed + working} versions passed, " + \
           f"{len(urls) - (failed + working)} remaining")
 
-def test_all_vanilla():
+def test_all_vanilla(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
-    setup_workspace()
+    url, name = jar_version_tuple
 
-    urls = get_vanilla_urls()
-    for url, name in urls:
-        try:
-            proc = Process(target=run_vanilla_test_url, args=[url,True], daemon=True)
-            proc.start()
+    try:
+        proc = Process(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
+        proc.start()
 
-            terminate_time = datetime.now() + timedelta(minutes=5)
+        terminate_time = datetime.now() + timedelta(minutes=1)
 
-            while terminate_time > datetime.now() and proc.is_alive():
-                sleep(1)
+        while terminate_time > datetime.now() and proc.is_alive():
+            sleep(1)
 
-            if proc.is_alive():
-                proc.terminate()
-                raise TimeoutError("Test timed out")
-        except TimeoutError as timeout_err:
-            if "Test timed out" in timeout_err.args:
-                pytest.fail(f"Testing version {name} timed out")
-            raise timeout_err
-        except Exception as exception: # pylint: disable=broad-exception-caught
-            pytest.fail(f"Testing version {name} errored: {exception.with_traceback()}")
+        if proc.is_alive():
+            proc.terminate()
+            raise TimeoutError("Test timed out")
+    except TimeoutError as timeout_err:
+        if "Test timed out" in timeout_err.args:
+            pytest.fail(f"Testing version {name} timed out")
+        raise timeout_err
+    except Exception as exception: # pylint: disable=broad-exception-caught
+        pytest.fail(f"Testing version {name} errored: {exception.with_traceback()}")
 
 def test_download_all_jars():
     """Download all scraped vanilla minecraft server jars"""

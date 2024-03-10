@@ -32,16 +32,16 @@ def reset_workspace():
         else:
             shutil.rmtree(os.path.join("testdir", entry))
 
-def run_vanilla_test_url(url, offline_mode=False):
+def run_vanilla_test_url(url, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server url"""
 
     setup_workspace()
 
     jarfile = download_file(url)
 
-    run_vanilla_test(jarfile, offline_mode)
+    run_vanilla_test(jarfile, offline_mode, version_name)
 
-def run_vanilla_test(jarfile, offline_mode=False):
+def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server jar"""
 
     if not offline_mode:
@@ -71,12 +71,15 @@ def run_vanilla_test(jarfile, offline_mode=False):
     while "Hello World" not in line:
         line = wrapper.output_queue.get(timeout=5)
 
-    bot = connect_mineflayer(offline_mode=offline_mode)
-    assert bot is not None
+    # MineFlayer doesn't (yet) support 1.7.10
+    # https://github.com/PrismarineJS/mineflayer/issues/432
+    if version_name != "1.7.10":
+        bot = connect_mineflayer(offline_mode=offline_mode)
+        assert bot is not None
 
-    line = ""
-    while "I spawned" not in line:
-        line = wrapper.output_queue.get(timeout=5)
+        line = ""
+        while "I spawned" not in line:
+            line = wrapper.output_queue.get(timeout=5)
 
     wrapper.stop()
 
@@ -108,7 +111,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 
     bot_connected = [False]
     def func(bot, bot_connected):
-        once(bot, 'login')
+        once(bot, 'spawn')
         bot_connected[0] = True
 
     t = Thread(target=func, args=[bot, bot_connected,], daemon=True)
@@ -134,7 +137,7 @@ def download_file(url, counter=""):
         file.write(req.content)
     return local_filename
 
-def get_vanilla_urls() -> list[str, str]:
+def get_vanilla_urls():
     """Function written by @Pfefan"""
 
     hostname = "https://mcversions.net/"
