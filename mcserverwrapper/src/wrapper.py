@@ -41,7 +41,7 @@ class Wrapper():
         logger.delete_logs()
 
         self.output_queue = Queue()
-        Thread(target=self._t_output_handler, args=[print_output,], daemon=True).start()
+        Thread(target=self._t_output_handler, args=[print_output,]).start()
 
     def startup(self, blocking=True) -> None:
         """Starts the minecraft server"""
@@ -65,10 +65,14 @@ class Wrapper():
 
         if len(command) == 0:
             return
+        
+        if command == "stop":
+            return
 
         self.server.execute_command(command)
 
-        sleep(wait_time)
+        if wait_time > 0:
+            sleep(wait_time)
 
     def stop(self) -> None:
         """Stops the server"""

@@ -9,9 +9,9 @@ import pytest
 
 from mcserverwrapper import Wrapper
 from .helpers import download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
-                     reset_workspace, run_vanilla_test_url, run_vanilla_test
+                     run_vanilla_test_url, run_vanilla_test
 
-def _test_all_vanilla():
+def _test_all_vanilla_cli():
     """Tests all of the vanilla minecraft versions"""
 
     with open("password.txt", "r", encoding="utf8") as f:
@@ -69,7 +69,33 @@ def _test_all_vanilla():
     print(f"{working}/{failed + working} versions passed, " + \
           f"{len(urls) - (failed + working)} remaining")
 
-def _test_download_all_jars():
+def test_all_vanilla():
+    """Tests all of the vanilla minecraft versions"""
+
+    setup_workspace()
+
+    urls = get_vanilla_urls()
+    for url, name in urls:
+        try:
+            proc = Process(target=run_vanilla_test_url, args=[url,True], daemon=True)
+            proc.start()
+
+            terminate_time = datetime.now() + timedelta(minutes=5)
+
+            while terminate_time > datetime.now() and proc.is_alive():
+                sleep(1)
+
+            if proc.is_alive():
+                proc.terminate()
+                raise TimeoutError("Test timed out")
+        except TimeoutError as timeout_err:
+            if "Test timed out" in timeout_err.args:
+                pytest.fail(f"Testing version {name} timed out")
+            raise timeout_err
+        except Exception as exception: # pylint: disable=broad-exception-caught
+            pytest.fail(f"Testing version {name} errored: {exception.with_traceback()}")
+
+def test_download_all_jars():
     """Download all scraped vanilla minecraft server jars"""
 
     setup_workspace()
@@ -81,7 +107,6 @@ def _test_download_all_jars():
         c += 1
     print(f"Downloaded {len(urls):3.0f}/{len(urls)} vanilla versions")
     assert len(os.listdir("testdir")) == len(urls)
-    reset_workspace()
 
 def _test_broken_versions():
     setup_workspace()
@@ -92,9 +117,9 @@ def _test_broken_versions():
     ]
     for vanilla_url in vanilla_urls:
         run_vanilla_test_url(vanilla_url)
-    reset_workspace()
 
-def test_single_vanilla(newest_server_jar):
+@pytest.mark.skipif(not os.path.isfile("password.txt"), reason="Cannot test online server without actual credentials present")
+def test_single_vanilla_online(newest_server_jar):
     """Test a single vanilla server version"""
 
     run_vanilla_test(newest_server_jar)
@@ -117,21 +142,21 @@ def test_mineflayer(newest_server_jar):
         wrapper.output_queue.get()
 
     wrapper.send_command("/say Hello World")
-    sleep(1)
-    lines = ""
-    while not wrapper.output_queue.empty():
-        lines += wrapper.output_queue.get()
-    assert "Hello World" in lines
+
+    line = ""
+    while "Hello World" not in line:
+        line = wrapper.output_queue.get(timeout=5)
 
     connect_mineflayer()
-    sleep(5)
-    lines = ""
-    while not wrapper.output_queue.empty():
-        lines += wrapper.output_queue.get()
-    assert "I spawned" in lines
+
+    line = ""
+    while "I spawned" not in line:
+        line = wrapper.output_queue.get(timeout=5)
 
     wrapper.stop()
-    assert not wrapper.server_running()
+
+    # assert that the server process really stopped
+    assert wrapper.server.get_child_status(0.1) is not None
 
 def _test_invalid_start_params(newest_server_jar):
     """Test a server with an invalid startup command"""

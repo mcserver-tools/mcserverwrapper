@@ -35,7 +35,7 @@ def reset_workspace():
 def run_vanilla_test_url(url, offline_mode=False):
     """Run all tests for a single vanilla minecraft server url"""
 
-    reset_workspace()
+    setup_workspace()
 
     jarfile = download_file(url)
 
@@ -43,6 +43,10 @@ def run_vanilla_test_url(url, offline_mode=False):
 
 def run_vanilla_test(jarfile, offline_mode=False):
     """Run all tests for a single vanilla minecraft server jar"""
+
+    if not offline_mode:
+        assert os.path.isfile("password.txt")
+        assert os.access("password.txt", os.R_OK)
 
     start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
@@ -62,23 +66,23 @@ def run_vanilla_test(jarfile, offline_mode=False):
         wrapper.output_queue.get()
 
     wrapper.send_command("/say Hello World")
-    sleep(1)
-    lines = ""
-    while not wrapper.output_queue.empty():
-        lines += wrapper.output_queue.get()
-    assert "Hello World" in lines
+
+    line = ""
+    while "Hello World" not in line:
+        line = wrapper.output_queue.get(timeout=5)
 
     bot = connect_mineflayer(offline_mode=offline_mode)
     assert bot is not None
 
-    sleep(5)
-    lines = ""
-    while not wrapper.output_queue.empty():
-        lines += wrapper.output_queue.get()
-    assert "I spawned" in lines
+    line = ""
+    while "I spawned" not in line:
+        line = wrapper.output_queue.get(timeout=5)
 
     wrapper.stop()
+
     assert not wrapper.server_running()
+    # assert that the server process really stopped
+    assert wrapper.server.get_child_status(0.1) is not None
 
 def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     """Connect a fake player to the server"""
@@ -114,7 +118,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     while not bot_connected[0]:
         if (datetime.now() - start_time) > timedelta(seconds=10):
             return None
-        sleep(1)
+        sleep(0.1)
 
     bot.chat('I spawned')
 
@@ -130,7 +134,7 @@ def download_file(url, counter=""):
         file.write(req.content)
     return local_filename
 
-def get_vanilla_urls():
+def get_vanilla_urls() -> list[str, str]:
     """Function written by @Pfefan"""
 
     hostname = "https://mcversions.net/"
@@ -141,25 +145,25 @@ def get_vanilla_urls():
     for text in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-2 px-3 bg-green-700 ' + \
                                    'hover:bg-green-900 rounded text-white no-underline ' + \
                                    'font-bold transition-colors duration-200'}):
-        if _version_valid(text.get('href')):
-            hostname = "https://mcversions.net/" + text.get('href')
-            page = requests.get(hostname, timeout=5)
-            soup = BeautifulSoup(page.content, 'html.parser')
-            for text2 in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
-                                         'bg-green-700 hover:bg-green-900 rounded text-white ' + \
-                                         'no-underline font-bold transition-colors duration-200'}):
-                links.append((text2.get('href'), text.get('href')))
-                counter += 1
-                print(f"Found {counter:3.0f} vanilla version urls", end="\r")
+        version_raw = text.get('href')
+        if re.match(r"^/download/1\...?.?.?$", version_raw):
+            version_name = version_raw.rsplit("/", maxsplit=1)[1]
+            if _version_valid(version_name):
+                hostname = "https://mcversions.net/" + version_raw
+                page = requests.get(hostname, timeout=5)
+                soup = BeautifulSoup(page.content, 'html.parser')
+                for text2 in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
+                                            'bg-green-700 hover:bg-green-900 rounded text-white ' + \
+                                            'no-underline font-bold transition-colors duration-200'}):
+                    links.append((text2.get('href'), version_name))
+                    counter += 1
+                    print(f"Found {counter:3.0f} vanilla version urls", end="\r")
 
     print(f"Found {counter:3.0f} vanilla version urls")
     return links
 
 def _version_valid(version):
-    if not re.match(r"^/download/1\...?.?.?$", version):
-        return False
-
-    vers_split = [int(item) for item in version.rsplit("/", maxsplit=1)[1].split(".")]
+    vers_split = [int(item) for item in version.split(".")]
 
     if vers_split[1] < 7:
         return False

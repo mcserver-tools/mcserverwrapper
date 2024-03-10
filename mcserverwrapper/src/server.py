@@ -5,6 +5,8 @@ from __future__ import annotations
 import _thread
 import os.path
 import re
+import signal
+import sys
 from datetime import datetime, timedelta
 from subprocess import TimeoutExpired
 from threading import Thread
@@ -56,6 +58,15 @@ class Server():
 
         self.execute_command("/stop")
 
+    def kill(self):
+        """Kill the server process, but DATA MAY BE LOST"""
+
+        logger.log("Killing server process")
+        if sys.platform == "win32":
+            self._child.kill(signal.CTRL_C_EVENT)
+        else:
+            self._child.kill(signal.SIGTERM)
+
     def execute_command(self, command: str):
         """Send a given command to the server"""
 
@@ -69,19 +80,23 @@ class Server():
         self._child.sendline(command)
 
         if command == "/stop":
-            while not os.access(os.path.join(self._server_path, "world", "session.lock"), os.R_OK):
-                sleep(0.1)
-            sleep(1)
+            status = self.get_child_status(20)
+            if status is None:
+                logger.log("Server did not stop within 20 seconds")
+                self.kill()
 
     def get_child_status(self, timeout: int) -> int | None:
-        """Return the exit status of the server process, or None if the process is still alive"""
+        """
+        Return the exit status of the server process, or None if the process is still alive after the timeout
+        @param timeout: the amount of seconds to wait for the process to exit
+        """
 
         try:
             status = self._child.proc.wait(timeout)
             # server stopped
             return status
         except TimeoutExpired:
-            # expected exception, server is running correctly
+            # expected exception, server is still running
             return None
 
     def is_running(self):
