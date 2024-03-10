@@ -121,7 +121,7 @@ class Server():
                 output += output_char
 
                 # if a line break is in the output, return line
-                if b"\r" in output:
+                if b"\n" in output:
                     yield self._format_output(output)
                     output = b""
                 # if more than 10 empty chars have been read, all data has been read
@@ -165,7 +165,7 @@ class Server():
 
         # try to decode the output string
         try:
-            text_str = raw_text.decode("ascii").replace("\n", "")
+            text_str = raw_text.decode("ascii")
         # if the total decoding fails, decode every char individually
         except UnicodeDecodeError:
             text_str = ""
@@ -177,7 +177,6 @@ class Server():
                     pass
                 except AttributeError:
                     pass
-            text_str = text_str.replace("\n", "")
 
         return text_str
 

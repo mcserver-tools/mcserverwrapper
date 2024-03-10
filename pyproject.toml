@@ -30,6 +30,7 @@ dev = [
     "requests",
     "bs4",
     "pylint",
+    "javascript",
 ]
 
 [project.urls]
