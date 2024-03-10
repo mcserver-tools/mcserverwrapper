@@ -35,7 +35,8 @@ class Server():
         self._watchdog.start()
 
         # wait for files to get generated or server to exit
-        while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) or not os.path.isfile(os.path.join(self._server_path, "eula.txt"))):
+        while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) \
+               or not os.path.isfile(os.path.join(self._server_path, "eula.txt"))):
             sleep(0.1)
 
         # read the port from the server.properties file
@@ -71,6 +72,8 @@ class Server():
             sleep(1)
 
     def get_child_status(self, timeout: int) -> int | None:
+        """Return the exit status of the server process, or None if the process is still alive"""
+
         try:
             status = self._child.proc.wait(timeout)
             # server stopped
@@ -96,7 +99,7 @@ class Server():
             terminate_time = datetime.now() + timedelta(seconds=timeout)
             if not isinstance(timeout, (int, float)):
                 raise TypeError(f"timeout expected type (int, float), not {type(timeout)}")
-            
+
 
         # wait for the server to initialize
         while self._child is None:
@@ -205,11 +208,11 @@ class Server():
             self._version_type = "unknown"
 
     def _t_watchdog(self, exit_program_on_error):
-        while (True):
+        while True:
             status = self.get_child_status(1)
             # server startup failed
             # ignore status 0, this means that the eula is not accepted
-            if status != None and status != 0:
+            if status in (None, 0):
                 sleep(1)
                 for line in self.read_output(3):
                     logger.log(line)

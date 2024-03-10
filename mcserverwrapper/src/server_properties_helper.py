@@ -1,3 +1,5 @@
+"""Module providing methods for managing the server.properties"""
+
 import os
 from typing import Any
 
@@ -35,18 +37,18 @@ def parse_properties_args(server_path: str, server_property_args: dict | None) -
                     maxp_string = line.split("=")[1]
                     if maxp_string.isdecimal():
                         server_property_args["maxp"] = int(maxp_string)
-        
+
         if "onli" not in server_property_args:
             for line in lines:
                 if "online-mode=" in line:
                     server_property_args["onli"] = line.split("=")[1]
-    
+
     # fall back to default values
-    if not "port" in server_property_args:
+    if "port" not in server_property_args:
         server_property_args["port"] = DEFAULT_PORT
-    if not "maxp" in server_property_args:
+    if "maxp" not in server_property_args:
         server_property_args["maxp"] = DEFAULT_MAX_PLAYERS
-    if not "onli" in server_property_args:
+    if "onli" not in server_property_args:
         server_property_args["onli"] = DEFAULT_ONLINE_MODE
 
     return server_property_args
@@ -70,7 +72,7 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
             lines[index] = f"max-players={server_property_args['maxp']}\n"
         if "online-mode=" in line:
             lines[index] = f"online-mode={server_property_args['onli']}\n"
-    
+
     if "server-port=" not in lines:
         lines.append(f"server-port={server_property_args['port']}\n")
     if "max-players=" not in lines:
@@ -82,12 +84,12 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
         properties.writelines(lines)
 
 def _validate_property_args(server_property_args: dict[str, Any]):
-    if server_property_args == None or not isinstance(server_property_args, dict):
+    if server_property_args is None or not isinstance(server_property_args, dict):
         raise TypeError(f"Invalid type {type(server_property_args)} for server_property_args")
     if len(server_property_args) != PROPERTY_ARGS_COUNT:
         raise ValueError(f"Incorrect length of elements '{len(server_property_args)}'" + \
                          f" for server_property_args, expected '{PROPERTY_ARGS_COUNT}'")
-    
+
     required_keys = ["port", "maxp", "onli"]
     for k in required_keys:
         if not k in server_property_args:

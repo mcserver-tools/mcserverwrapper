@@ -16,7 +16,8 @@ LOGFILE_NAME = "mcserverwrapper.log"
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
-    def __init__(self, server_start_command=None, server_property_args=None, server_path=None, print_output=True, exit_program_on_error=False) -> None:
+    def __init__(self, server_start_command=None, server_property_args=None, server_path=None,
+                 print_output=True, exit_program_on_error=False) -> None:
         if server_path is None:
             server_path = os.getcwd()
         self.server_path = server_path
@@ -31,7 +32,7 @@ class Wrapper():
             self.server_start_command = DEFAULT_START_CMD
 
         self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
-        
+
         self._exit_program_on_error = exit_program_on_error
 
         self.server = Server(self.server_path, exit_program_on_error=self._exit_program_on_error)
@@ -47,7 +48,8 @@ class Wrapper():
 
         # if the Server is started for the first time,
         # create a temp server to create the eula and server.properties
-        if not os.path.isfile(os.path.join(self.server_path, "./server.properties")) or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
+        if not os.path.isfile(os.path.join(self.server_path, "./server.properties")) \
+           or not os.path.isfile(os.path.join(self.server_path, "eula.txt")):
             self._run_temp_server()
 
         # accept the eula
@@ -88,7 +90,7 @@ class Wrapper():
             # some versions only add an empty server.properties,
             # so just add the port and max players later
             pass
-    
+
     def _accept_eula(self):
         """Accept eula.txt"""
 

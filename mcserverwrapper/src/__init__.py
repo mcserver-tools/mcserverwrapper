@@ -1,6 +1,6 @@
 """Export Wrapper class"""
 
-from mcserverwrapper.src import Wrapper
+from .wrapper import Wrapper
 
 __exports__ = [
     Wrapper

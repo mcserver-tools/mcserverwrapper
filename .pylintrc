@@ -21,4 +21,6 @@ disable=too-many-arguments,
         fixme,
         bare-except,
         duplicate-code,
-        too-few-public-methods
+        too-few-public-methods,
+        global-statement,
+        too-many-branches
