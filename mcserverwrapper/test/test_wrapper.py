@@ -142,6 +142,3 @@ def _test_invalid_start_params(newest_server_jar):
                       server_path=os.path.join(os.getcwd(), "testdir"))
     with pytest.raises(KeyboardInterrupt):
         wrapper.startup()
-
-if __name__ == "__main__":
-    test_all_vanilla()
