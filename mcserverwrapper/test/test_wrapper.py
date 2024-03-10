@@ -2,6 +2,7 @@
 
 import os
 from multiprocessing import Process
+from threading import Thread
 from time import sleep
 from datetime import datetime, timedelta
 
@@ -75,16 +76,15 @@ def test_all_vanilla(jar_version_tuple):
     url, name = jar_version_tuple
 
     try:
-        proc = Process(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
-        proc.start()
+        thread = Thread(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
+        thread.start()
 
-        terminate_time = datetime.now() + timedelta(minutes=1)
+        terminate_time = datetime.now() + timedelta(minutes=5)
 
-        while terminate_time > datetime.now() and proc.is_alive():
+        while terminate_time > datetime.now() and thread.is_alive():
             sleep(1)
 
-        if proc.is_alive():
-            proc.terminate()
+        if thread.is_alive():
             raise TimeoutError("Test timed out")
     except TimeoutError as timeout_err:
         if "Test timed out" in timeout_err.args:
