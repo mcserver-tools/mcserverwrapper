@@ -29,6 +29,7 @@ dev = [
     "pytest",
     "requests",
     "bs4",
+    "pylint",
 ]
 
 [project.urls]

@@ -4,3 +4,4 @@ mcstatus
 bs4
 javascript
 pytest
+pylint

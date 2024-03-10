@@ -2,13 +2,14 @@
 
 import pathlib
 import os
-from time import sleep
 
 from mcserverwrapper.src.wrapper import Wrapper
 
 # pylint: disable=C0103
 
 def main():
+    """Main function"""
+
     wrapper = Wrapper(exit_program_on_error=True)
     wrapper.startup()
 
@@ -18,7 +19,11 @@ def main():
         wrapper.send_command(command, wait_time=1)
 
 def main2():
-    wrapper = Wrapper(server_path=os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "mcserverwrapper", "test", "temp"), print_output=True, exit_program_on_error=True)
+    """Function used for testing, don't call this!"""
+
+    wrapper = Wrapper(server_path=os.path.join(pathlib.Path(__file__).parent.parent.resolve(),
+                                               "mcserverwrapper", "test", "temp"),
+                      print_output=True, exit_program_on_error=True)
     wrapper.startup()
 
     command = ""
