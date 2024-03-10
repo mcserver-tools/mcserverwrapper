@@ -85,7 +85,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 
     if not offline_mode:
         with open("password.txt", "r", encoding="utf8") as f:
-            password = f.read().split("\n", maxsplit=1)
+            password = f.read().split("\n")
         bot = mineflayer.createBot({
             'host': address,
             'port': port,

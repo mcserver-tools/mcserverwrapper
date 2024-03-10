@@ -34,6 +34,15 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '21'
+    - name: Save secrets to file
+      env:
+        USERNAME: ${{ secrets.MCUSERNAME }}
+        PASSWORD: ${{ secrets.MCPASSWORD }}
+      run: |
+        touch password.txt
+        echo $env:USERNAME >> password.txt
+        echo $env:PASSWORD >> password.txt
+      shell: bash
     - name: Run all tests with pytest
       run: |
         pytest
