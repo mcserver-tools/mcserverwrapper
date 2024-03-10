@@ -93,18 +93,15 @@ def test_all_vanilla(jar_version_tuple):
     except Exception as exception: # pylint: disable=broad-exception-caught
         pytest.fail(f"Testing version {name} errored: {exception.with_traceback()}")
 
-def test_download_all_jars():
+def test_download_all_jars(jar_download_url):
     """Download all scraped vanilla minecraft server jars"""
 
+    url = jar_download_url
+
     setup_workspace()
-    urls = get_vanilla_urls()
-    c = 0
-    for url in [item[0] for item in urls]:
-        download_file(url, str(c))
-        print(f"Downloaded {c+1:3.0f}/{len(urls)} vanilla versions", end="\r")
-        c += 1
-    print(f"Downloaded {len(urls):3.0f}/{len(urls)} vanilla versions")
-    assert len(os.listdir("testdir")) == len(urls)
+
+    jarfile = download_file(url)
+    assert os.path.isfile(os.path.join("testdir", jarfile))
 
 def _test_broken_versions():
     setup_workspace()

@@ -34,3 +34,8 @@ def pytest_generate_tests(metafunc: Metafunc):
         metafunc.parametrize(argnames="jar_version_tuple",
                              argvalues=urls,
                              ids=[f"test_version_{url[1]}" for url in urls])
+    if "jar_download_url" in metafunc.fixturenames:
+        urls = get_vanilla_urls()
+        metafunc.parametrize(argnames="jar_download_url",
+                             argvalues=[url[0] for url in urls],
+                             ids=[f"test_download_version_{url[1]}" for url in urls])
