@@ -39,6 +39,7 @@ jobs:
         USERNAME: ${{ secrets.MCUSERNAME }}
         PASSWORD: ${{ secrets.MCPASSWORD }}
       run: |
+        pwd
         touch password.txt
         echo $env:USERNAME >> password.txt
         echo $env:PASSWORD >> password.txt
