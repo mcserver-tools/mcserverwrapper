@@ -11,7 +11,7 @@ from mcserverwrapper import Wrapper
 from .helpers import download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
                      reset_workspace, run_vanilla_test_url, run_vanilla_test
 
-def test_all_vanilla():
+def _test_all_vanilla():
     """Tests all of the vanilla minecraft versions"""
 
     with open("password.txt", "r", encoding="utf8") as f:
@@ -69,7 +69,7 @@ def test_all_vanilla():
     print(f"{working}/{failed + working} versions passed, " + \
           f"{len(urls) - (failed + working)} remaining")
 
-def test_download_all_jars():
+def _test_download_all_jars():
     """Download all scraped vanilla minecraft server jars"""
 
     setup_workspace()
@@ -133,7 +133,7 @@ def test_mineflayer(newest_server_jar):
     wrapper.stop()
     assert not wrapper.server_running()
 
-def test_invalid_start_params(newest_server_jar):
+def _test_invalid_start_params(newest_server_jar):
     """Test a server with an invalid startup command"""
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"

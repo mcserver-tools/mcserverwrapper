@@ -7,5 +7,6 @@ mcserverwrapper/test/temp/
 *.egg-info/
 .pytest_cache/
 examples/temp/
+dist/
 *.pyc
 password.txt
