@@ -23,6 +23,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Install node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Install mineflayer
+      run: |
+        npm install mineflayer
     - name: Run all tests with pytest
       run: |
         pytest
