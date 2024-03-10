@@ -30,6 +30,10 @@ jobs:
     - name: Install mineflayer
       run: |
         npm install mineflayer
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
     - name: Run all tests with pytest
       run: |
         pytest
