@@ -1,7 +1,7 @@
+"""Test the server_properties_helper methods"""
+
 import pathlib
 import os
-
-import pytest
 
 from mcserverwrapper.src import server_properties_helper as sph
 
@@ -51,7 +51,7 @@ def test_params_with_file():
                       "online-mode=true\n"
 
     props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+") as props_file:
+    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -72,7 +72,7 @@ def test_params_with_file():
 def test_parse_mixed_params_1():
     """Tests the helper with custom and default params"""
 
-    props = { 
+    props = {
         "port": 25541
     }
 
@@ -90,7 +90,7 @@ def test_parse_mixed_params_1():
 def test_parse_mixed_params_2():
     """Tests the helper with custom and default params"""
 
-    props = { 
+    props = {
         "maxp": 43,
         "onli": "false"
     }
@@ -116,7 +116,7 @@ def test_save_existing():
                       "online-mode=false"
 
     props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+") as props_file:
+    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -132,9 +132,9 @@ def test_save_existing():
     assert props["maxp"] == 21
     assert props["onli"] == "true"
 
-    with open(os.path.join(props_path, "server.properties"), "r") as props_file:
+    with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
-    
+
     assert lines[0] == "server-port=25546"
     assert lines[1] == "some-other-prop=haha"
     assert lines[2] == "max-players=21"
@@ -148,7 +148,7 @@ def test_save_new():
                       "a-final-prop=aha\n"
 
     props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+") as props_file:
+    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -164,9 +164,9 @@ def test_save_new():
     assert props["maxp"] == 21
     assert props["onli"] == "true"
 
-    with open(os.path.join(props_path, "server.properties"), "r") as props_file:
+    with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
-    
+
     assert lines[0] == "some-other-prop=haha"
     assert lines[1] == "a-final-prop=aha"
     assert lines[2] == "server-port=25546"

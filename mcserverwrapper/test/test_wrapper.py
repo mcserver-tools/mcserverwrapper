@@ -5,14 +5,14 @@ from multiprocessing import Process
 from time import sleep
 from datetime import datetime, timedelta
 
-from .helpers import _download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, reset_workspace, test_vanilla_url
-
-from mcserverwrapper.src.wrapper import Wrapper
+from mcserverwrapper import Wrapper
+from .helpers import _download_file, connect_mineflayer, get_vanilla_urls, setup_workspace,\
+                     reset_workspace, test_vanilla_url
 
 def test_all_vanilla():
     """Tests all of the vanilla minecraft versions"""
 
-    with open("password.txt", "r") as f:
+    with open("password.txt", "r", encoding="utf8") as f:
         assert f.read()
 
     setup_workspace()
@@ -49,9 +49,8 @@ def test_all_vanilla():
                 print(urls[[item[0] for item in urls].index(url)][1])
                 print(urls[[item[0] for item in urls].index(url) - 1][1])
                 return
-            else:
-                raise timeout_err
-        except Exception as exception:
+            raise timeout_err
+        except Exception as exception: # pylint: disable=broad-exception-caught
             failed += 1
             failed_urls.append(url)
             print(f"{working}/{failed + working} versions passed, " + \
@@ -69,6 +68,8 @@ def test_all_vanilla():
           f"{len(urls) - (failed + working)} remaining")
 
 def test_download_all_jars():
+    """Download all scraped vanilla minecraft server jars"""
+
     setup_workspace()
     urls = get_vanilla_urls()
     c = 0
@@ -92,6 +93,8 @@ def _test_broken_versions():
     reset_workspace()
 
 def test_single_vanilla():
+    """Test a single vanilla server version"""
+
     setup_workspace()
     urls = [
         "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
@@ -101,6 +104,8 @@ def test_single_vanilla():
     reset_workspace()
 
 def test_mineflayer():
+    """Test the mineflayer bot"""
+
     links = [
         "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
     ]
@@ -112,7 +117,8 @@ def test_mineflayer():
         jarfile = _download_file(url)
         start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
-        wrapper = Wrapper(server_start_command=start_cmd, print_output=False, server_path=os.path.join(os.getcwd(), "testdir"))
+        wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
+                          server_path=os.path.join(os.getcwd(), "testdir"))
         wrapper.startup()
         assert wrapper.server_running()
         while not wrapper.output_queue.empty():

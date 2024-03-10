@@ -1,5 +1,5 @@
-[MASTER]
-ignore=test
+[MAIN]
+max-line-length=120
 
 [MESSAGES CONTROL]
 

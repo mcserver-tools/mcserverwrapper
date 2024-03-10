@@ -1,3 +1,5 @@
+"""Helper functions used during testing"""
+
 from datetime import datetime, timedelta
 import os
 import shutil
@@ -9,16 +11,20 @@ from bs4 import BeautifulSoup
 import requests
 import pytest
 
-from javascript import require, On, Once, AsyncTask, once, off
+from javascript import require, once
 
 from mcserverwrapper.src.wrapper import Wrapper
 mineflayer = require('mineflayer')
 
 def setup_workspace():
+    """Setup the testing folder"""
+
     if not os.path.isdir("testdir"):
         os.mkdir("testdir")
 
 def reset_workspace():
+    """Delete everything inside the testing folder"""
+
     for entry in os.listdir("testdir"):
         if os.path.isfile(os.path.join("testdir", entry)):
             os.remove(os.path.join("testdir", entry))
@@ -27,6 +33,8 @@ def reset_workspace():
 
 @pytest.mark.skip(reason="wrongly detected as a test")
 def test_vanilla_url(url, offline_mode=False):
+    """Run all tests for a single vanilla minecraft server"""
+
     reset_workspace()
 
     jarfile = _download_file(url)
@@ -38,7 +46,9 @@ def test_vanilla_url(url, offline_mode=False):
             "onli": "false"
         }
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False, server_path=os.path.join(os.getcwd(), "testdir"), server_property_args=server_property_args)
+    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
+                      server_path=os.path.join(os.getcwd(), "testdir"),
+                      server_property_args=server_property_args)
     wrapper.startup()
     assert wrapper.server_running()
     while not wrapper.output_queue.empty():
@@ -64,8 +74,10 @@ def test_vanilla_url(url, offline_mode=False):
     assert not wrapper.server_running()
 
 def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
+    """Connect a fake player to the server"""
+
     if not offline_mode:
-        with open("password.txt", "r") as f:
+        with open("password.txt", "r", encoding="utf8") as f:
             password = f.read().split("\n", maxsplit=1)
         bot = mineflayer.createBot({
             'host': address,
@@ -105,7 +117,7 @@ def get_vanilla_urls():
     """Function written by @Pfefan"""
 
     hostname = "https://mcversions.net/"
-    page = requests.get(hostname)
+    page = requests.get(hostname, timeout=5)
     links = []
     counter = 0
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -114,7 +126,7 @@ def get_vanilla_urls():
                                    'font-bold transition-colors duration-200'}):
         if _version_valid(text.get('href')):
             hostname = "https://mcversions.net/" + text.get('href')
-            page = requests.get(hostname)
+            page = requests.get(hostname, timeout=5)
             soup = BeautifulSoup(page.content, 'html.parser')
             for text2 in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
                                          'bg-green-700 hover:bg-green-900 rounded text-white ' + \
@@ -136,15 +148,15 @@ def _version_valid(version):
         return False
     if vers_split[1] == 7 and (len(vers_split) < 3 or vers_split[2] < 10):
         return False
-    if ".".join([str(item) for item in vers_split]) in ["1.8"]: #, "1.19"]:
+    if ".".join([str(item) for item in vers_split]) in ["1.8"]:
         return False
-    
+
     return True
 
 def _download_file(url, counter=""):
     filename_split = url.rsplit('/', maxsplit=1)[1].split(".")
     local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
-    req = requests.get(url)
+    req = requests.get(url, timeout=5)
     with open(os.path.join("testdir", local_filename), 'wb') as file:
         file.write(req.content)
     return local_filename
