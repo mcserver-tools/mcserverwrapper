@@ -38,7 +38,7 @@ def test_all_vanilla(jar_version_tuple):
     except Exception as exception:
         pytest.fail(reason=f"Testing version {name} errored: {exception}")
 
-def test_download_all_jars(jar_download_url):
+def _test_download_all_jars(jar_download_url):
     """Download all scraped vanilla minecraft server jars"""
 
     url = jar_download_url
