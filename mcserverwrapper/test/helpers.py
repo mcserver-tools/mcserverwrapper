@@ -22,9 +22,15 @@ mineflayer = require('mineflayer')
 def setup_workspace():
     """Setup the testing folder"""
 
-    if os.path.isdir("testdir"):
-        shutil.rmtree("testdir")
-    os.makedirs("testdir", exist_ok=True)
+    try:
+        if os.path.isdir("testdir"):
+            shutil.rmtree("testdir")
+        os.makedirs("testdir", exist_ok=True)
+    except PermissionError as e:
+        pytest.skip("cannot access testdir")
+
+        if "[WinError 32]" in e.args:
+            pytest.skip("cannot access testdir")
 
 def reset_workspace():
     """Delete everything inside the testing folder"""
