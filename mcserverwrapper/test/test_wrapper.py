@@ -70,7 +70,7 @@ def _test_all_vanilla_cli():
     print(f"{working}/{failed + working} versions passed, " + \
           f"{len(urls) - (failed + working)} remaining")
 
-def _test_all_vanilla(jar_version_tuple):
+def test_all_vanilla(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
     url, name = jar_version_tuple
@@ -96,7 +96,7 @@ def _test_all_vanilla(jar_version_tuple):
     except Exception as exception:
         pytest.fail(reason=f"Testing version {name} errored: {exception}")
 
-def _test_download_all_jars(jar_download_url):
+def test_download_all_jars(jar_download_url):
     """Download all scraped vanilla minecraft server jars"""
 
     url = jar_download_url
