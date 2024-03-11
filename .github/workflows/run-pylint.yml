@@ -4,9 +4,12 @@ on: [push]
 
 jobs:
   pylint:
-    runs-on: self-hosted
+    runs-on:
+      - ${{ matrix.os }}
+      - self-hosted
     strategy:
       matrix:
+        os: [Linux, Windows]
         python-version: ["3.8", "3.12"]
     steps:
     - uses: actions/checkout@v3
