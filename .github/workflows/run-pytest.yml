@@ -49,4 +49,4 @@ jobs:
         echo $PASSWORD >> password.txt
     - name: Run all tests with pytest
       run: |
-        pytest
+        pytest -rs
