@@ -17,10 +17,10 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=too-many-arguments,
-        invalid-name,
         fixme,
         bare-except,
         duplicate-code,
         too-few-public-methods,
         global-statement,
-        too-many-branches
+        too-many-branches,
+        broad-exception-raised

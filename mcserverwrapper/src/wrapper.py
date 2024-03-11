@@ -1,5 +1,6 @@
 """A module containing the wrapper class"""
 
+import atexit
 import os
 import os.path
 import sys
@@ -11,18 +12,17 @@ from .server import Server
 from . import logger, server_properties_helper
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
-LOGFILE_NAME = "mcserverwrapper.log"
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
     def __init__(self, server_start_command=None, server_property_args=None, server_path=None,
-                 print_output=True, exit_program_on_error=False) -> None:
+                 print_output=True) -> None:
         if server_path is None:
             server_path = os.getcwd()
         self.server_path = server_path
 
-        logger.setup(server_path, LOGFILE_NAME)
+        logger.setup(server_path)
 
         if server_start_command is not None:
             self.server_start_command = server_start_command
@@ -33,9 +33,8 @@ class Wrapper():
 
         self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
 
-        self._exit_program_on_error = exit_program_on_error
-
-        self.server = Server(self.server_path, exit_program_on_error=self._exit_program_on_error)
+        self.server = Server(self.server_path)
+        atexit.register(self.stop)
 
         # delete old logfile
         logger.delete_logs()
@@ -87,13 +86,17 @@ class Wrapper():
     def _run_temp_server(self):
         """Start a temporary server to generate server.properties and eula.txt"""
 
-        tempserver = Server(self.server_path, exit_program_on_error=self._exit_program_on_error)
+        tempserver = Server(self.server_path)
+        atexit.register(tempserver.stop)
+
         try:
             tempserver.start(self.server_start_command, cwd=self.server_path, blocking=False)
         except ValueError:
             # some versions only add an empty server.properties,
             # so just add the port and max players later
             pass
+
+        atexit.unregister(tempserver.stop)
 
     def _accept_eula(self):
         """Accept eula.txt"""

@@ -21,22 +21,18 @@ from . import info_getter, logger
 class Server():
     """The core of the wrapper, communicates directly with the minecraft servers"""
 
-    def __init__(self, server_path: str, exit_program_on_error=False) -> None:
+    def __init__(self, server_path: str) -> None:
         self._server_path = server_path
-        self._child = None
+        self.child = None
         self._port = None
         self._version = None
         self._version_type = None
-        self._watchdog = Thread(target=self._t_watchdog, args=[exit_program_on_error,], daemon=True)
 
     def start(self, command, cwd=None, blocking=True):
         """Starts the minecraft server"""
 
         # starts the server process
-        self._child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
-
-        # starts the server watchdog
-        self._watchdog.start()
+        self.child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
 
         # wait for files to get generated or server to exit
         while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) \
@@ -54,18 +50,19 @@ class Server():
             Thread(target=self._wait_for_startup, daemon=True).start()
 
     def stop(self):
-        """Stop the running server"""
+        """Stop the running server gracefully, and kills it if it doesn't stop within 20 seconds"""
 
-        self.execute_command("/stop")
+        if self.get_child_status(1) is None:
+            self.execute_command("/stop")
 
     def kill(self):
         """Kill the server process, but DATA MAY BE LOST"""
 
         logger.log("Killing server process")
         if sys.platform == "win32":
-            self._child.kill(signal.CTRL_C_EVENT)
+            self.child.kill(signal.CTRL_C_EVENT)
         else:
-            self._child.kill(signal.SIGTERM)
+            self.child.kill(signal.SIGTERM)
 
     def execute_command(self, command: str):
         """Send a given command to the server"""
@@ -77,9 +74,10 @@ class Server():
         elif self._version_type in ["paper", "spigot", "bukkit"] and command.startswith("/"):
             command = command[1::]
 
-        self._child.sendline(command)
+        self.child.sendline(command)
 
         if command == "/stop":
+            logger.log("Stopping server")
             status = self.get_child_status(20)
             if status is None:
                 logger.log("Server did not stop within 20 seconds")
@@ -92,7 +90,7 @@ class Server():
         """
 
         try:
-            status = self._child.proc.wait(timeout)
+            status = self.child.proc.wait(timeout)
             # server stopped
             return status
         except TimeoutExpired:
@@ -118,7 +116,7 @@ class Server():
                 raise TypeError(f"timeout expected type (int, float), not {type(timeout)}")
 
         # wait for the server to initialize
-        while self._child is None:
+        while self.child is None:
             sleep(0.1)
 
         output = b""
@@ -126,7 +124,7 @@ class Server():
         # read one char at a time, until the server exits
         while terminate_time > datetime.now():
             try:
-                output_char = bytes(self._child.read(1))
+                output_char = bytes(self.child.read(1))
 
                 if output == b"":
                     empties += 1
@@ -234,14 +232,15 @@ class Server():
                         return
                 has_started = self.is_running()
 
-            if False and has_started and not self.is_running(): # pylint: disable=R1727
+            # pylint: disable-next=condition-evals-to-constant
+            if False and has_started and not self.is_running():
                 if ping_timeouts > 5:
-                    # return self._t_exit(exit_program_on_error)
-                    pass
-                else:
-                    ping_timeouts += 1
-                    logger.log(f"server ping timed out {ping_timeouts} in a row")
-                    sleep(5)
+                    self._t_exit(exit_program_on_error)
+                    return
+
+                ping_timeouts += 1
+                logger.log(f"server ping timed out {ping_timeouts} in a row")
+                sleep(5)
             else:
                 ping_timeouts = 0
 

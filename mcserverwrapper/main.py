@@ -10,26 +10,35 @@ from mcserverwrapper.src.wrapper import Wrapper
 def main():
     """Main function"""
 
-    wrapper = Wrapper(exit_program_on_error=True)
-    wrapper.startup()
+    wrapper = Wrapper()
 
-    command = ""
-    while command != "/stop" and wrapper.server_running():
-        command = input()
-        wrapper.send_command(command, wait_time=1)
+    try:
+        wrapper.startup()
+
+        command = ""
+        while command != "/stop" and wrapper.server_running():
+            command = input()
+            wrapper.send_command(command, wait_time=1)
+    except BaseException as e:
+        wrapper.stop()
+        raise e
 
 def main2():
     """Function used for testing, don't call this!"""
 
     wrapper = Wrapper(server_path=os.path.join(pathlib.Path(__file__).parent.parent.resolve(),
                                                "mcserverwrapper", "test", "temp"),
-                      print_output=True, exit_program_on_error=True)
-    wrapper.startup()
+                      print_output=True)
 
-    command = ""
-    while command != "/stop" and wrapper.server_running():
-        command = input()
-        wrapper.send_command(command, wait_time=1)
+    try:
+        wrapper.startup()
+        command = ""
+        while command != "/stop" and wrapper.server_running():
+            command = input()
+            wrapper.send_command(command, wait_time=1)
+    except KeyboardInterrupt as e:
+        wrapper.stop()
+        raise e
 
 if __name__ == "__main__":
     main()

@@ -5,14 +5,14 @@ from __future__ import annotations
 from mcstatus import JavaServer
 from mcstatus.pinger import PingResponse
 
-def ping_address_with_return(address, port) -> PingResponse | None:
+def ping_address_with_return(address, port, timeout=3) -> PingResponse | None:
     """Pings a given address/port combination and returns the result or None"""
 
     if isinstance(port, str):
         port = int(port)
 
     try:
-        server = JavaServer(address, port)
+        server = JavaServer(address, port, timeout=timeout)
         status = server.status()
         return status
     except (TimeoutError, ConnectionAbortedError, ConnectionResetError, IOError):
