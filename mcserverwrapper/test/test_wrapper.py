@@ -2,15 +2,15 @@
 
 import os
 from multiprocessing import Process
-from threading import Thread
 from time import sleep
 from datetime import datetime, timedelta
 
 import pytest
 
 from mcserverwrapper import Wrapper
-from .helpers import download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
+from .helpers import assert_port_is_free, download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
                      run_vanilla_test_url, run_vanilla_test
+from .testable_thread import TestableThread
 
 def _test_all_vanilla_cli():
     """Tests all of the vanilla minecraft versions"""
@@ -76,7 +76,7 @@ def test_all_vanilla(jar_version_tuple):
     url, name = jar_version_tuple
 
     try:
-        thread = Thread(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
+        thread = TestableThread(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
         thread.start()
 
         terminate_time = datetime.now() + timedelta(minutes=5)
@@ -86,12 +86,15 @@ def test_all_vanilla(jar_version_tuple):
 
         if thread.is_alive():
             raise TimeoutError("Test timed out")
+
+        thread.join()
     except TimeoutError as timeout_err:
         if "Test timed out" in timeout_err.args:
             pytest.fail(f"Testing version {name} timed out")
         raise timeout_err
-    except Exception as exception: # pylint: disable=broad-exception-caught
-        pytest.fail(f"Testing version {name} errored: {exception.with_traceback()}")
+    # pylint: disable-next=broad-exception-caught
+    except Exception as exception:
+        pytest.fail(reason=f"Testing version {name} errored: {exception}")
 
 def test_download_all_jars(jar_download_url):
     """Download all scraped vanilla minecraft server jars"""
@@ -127,6 +130,8 @@ def test_single_vanilla_offline(newest_server_jar):
 
 def test_mineflayer(newest_server_jar):
     """Test the mineflayer bot"""
+
+    assert_port_is_free()
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
