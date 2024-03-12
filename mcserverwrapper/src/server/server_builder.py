@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import pathlib
 import os
+import re
 from zipfile import ZipFile
 
 from .base_server import BaseServer
@@ -131,11 +132,24 @@ class ServerBuilder:
 
     @staticmethod
     def _check_jar_vanilla(jar_file: str) -> McVersion | None:
-        version_json = None
         with ZipFile(jar_file, "r") as zf:
+            # for Minecraft 1.14+
+            version_json = None
             for zip_fileinfo in zf.filelist:
                 if zip_fileinfo.filename == "version.json":
                     version_json = json.loads(zf.read(zip_fileinfo))
-        if version_json is None:
-            return None
-        return McVersion(version_json["name"], McVersionType.VANILLA)
+            if version_json is not None:
+                return McVersion(version_json["name"], McVersionType.VANILLA)
+
+            # for Mineraft 1.13.2-
+            mcs_class = None
+            for zip_fileinfo in zf.filelist:
+                if zip_fileinfo.filename == "net/minecraft/server/MinecraftServer.class":
+                    mcs_class = zf.read(zip_fileinfo)
+            if mcs_class is not None:
+                vers = [x.group() for x in re.finditer(r"1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?", mcs_class.decode("ANSI"))]
+                if len(vers) != 0:
+                    return McVersion(vers[0], McVersionType.VANILLA)
+
+        # no version was found
+        return None
