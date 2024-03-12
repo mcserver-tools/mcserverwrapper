@@ -4,6 +4,7 @@ import pathlib
 import os
 
 from mcserverwrapper.src import server_properties_helper as sph
+from mcserverwrapper.src.mcversion import McVersion, McVersionType
 
 def test_get_mixed_params():
     """Tests the helper with mixed params"""
@@ -12,19 +13,21 @@ def test_get_mixed_params():
         "server-port": 25506,
         "max-players": 18,
         "some-unknown-prop": "hehe",
-        "online-mode": "true"
+        "online-mode": "true",
+        "level-type": "minecraft\\:normal"
     }
 
     props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
     with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write("\n".join([f"{key}={value}" for key, value in props.items()]))
 
-    result = sph.get_properties(props_path)
+    result = sph.get_properties(props_path, McVersion("1.20", McVersionType.VANILLA))
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert result["maxp"] == props["max-players"]
     assert result["onli"] == props["online-mode"]
     assert result["port"] == props["server-port"]
+    assert result["levt"] == props["level-type"]
 
 def test_parse_custom_params():
     """Tests the helper with custom params"""
@@ -32,36 +35,40 @@ def test_parse_custom_params():
     props = {
         "port": 25590,
         "maxp": 21,
-        "onli": "false"
+        "onli": "false",
+        "levt": "minecraft\\:normal"
     }
 
-    result = sph.parse_properties_args(os.getcwd(), props)
+    result = sph.parse_properties_args(os.getcwd(), props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert props["port"] == 25590
     assert props["maxp"] == 21
     assert props["onli"] == "false"
 
+    assert len(result) == 4
     assert result["port"] == 25590
     assert result["maxp"] == 21
     assert result["onli"] == "false"
+    assert result["levt"] == "minecraft\\:normal"
 
 def test_parse_default_params():
     """Tests the helper without custom params"""
 
     props = { }
 
-    result = sph.parse_properties_args(os.getcwd(), props)
+    result = sph.parse_properties_args(os.getcwd(), props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert "port" not in props
     assert "maxp" not in props
     assert "onli" not in props
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
 
 def test_params_with_file():
     """Tests the helper with a server.properties file"""
@@ -80,17 +87,18 @@ def test_params_with_file():
         "maxp": 22
     }
 
-    result = sph.parse_properties_args(props_path, props)
+    result = sph.parse_properties_args(props_path, props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert "port" not in props
     assert props["maxp"] == 22
     assert "onli" not in props
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert result["port"] == 25599
     assert result["maxp"] == 22
     assert result["onli"] == "true"
+    assert result["levt"] == "minecraft\\:normal"
 
 def test_parse_mixed_params_1():
     """Tests the helper with custom and default params"""
@@ -99,37 +107,40 @@ def test_parse_mixed_params_1():
         "port": 25541
     }
 
-    result = sph.parse_properties_args(os.getcwd(), props)
+    result = sph.parse_properties_args(os.getcwd(), props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert props["port"] == 25541
     assert "maxp" not in props
     assert "onli" not in props
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert result["port"] == 25541
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
 
 def test_parse_mixed_params_2():
     """Tests the helper with custom and default params"""
 
     props = {
         "maxp": 43,
-        "onli": "false"
+        "onli": "false",
+        "levt": "default"
     }
 
-    result = sph.parse_properties_args(os.getcwd(), props)
+    result = sph.parse_properties_args(os.getcwd(), props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert "port" not in props
     assert props["maxp"] == 43
     assert props["onli"] == "false"
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == 43
     assert result["onli"] == "false"
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
 
 def test_save_existing():
     """Tests the helper save function with valid params"""
@@ -147,7 +158,8 @@ def test_save_existing():
     props = {
         "port": 25546,
         "maxp": 21,
-        "onli": "true"
+        "onli": "true",
+        "levt": sph.DEFAULT_LEVEL_TYPE_1_19
     }
 
     sph.save_properties(props_path, props)
@@ -160,12 +172,13 @@ def test_save_existing():
     with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
-    assert len(lines) == 5
+    assert len(lines) == 6
     assert lines[0] == "server-port=25546"
     assert lines[1] == "some-other-prop=haha"
     assert lines[2] == "max-players=21"
     assert lines[3] == "a-final-prop=aha"
     assert lines[4] == "online-mode=true"
+    assert lines[5] == "level-type=minecraft\\:normal"
 
 def test_save_new():
     """Tests the helper save function with valid params"""
@@ -180,7 +193,8 @@ def test_save_new():
     props = {
         "port": 25546,
         "maxp": 21,
-        "onli": "true"
+        "onli": "true",
+        "levt": "minecraft\\:normal"
     }
 
     sph.save_properties(props_path, props)
@@ -193,9 +207,10 @@ def test_save_new():
     with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
-    assert len(lines) == 5
+    assert len(lines) == 6
     assert lines[0] == "some-other-prop=haha"
     assert lines[1] == "a-final-prop=aha"
     assert lines[2] == "server-port=25546"
     assert lines[3] == "max-players=21"
     assert lines[4] == "online-mode=true"
+    assert lines[5] == "level-type=minecraft\\:normal"

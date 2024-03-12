@@ -3,27 +3,34 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 
-# how many different property args are allowed
-PROPERTY_ARGS_COUNT = 3
+from .mcversion import McVersion
 
 DEFAULT_PORT = 25565
 DEFAULT_MAX_PLAYERS = 20
 DEFAULT_ONLINE_MODE = "true"
+DEFAULT_LEVEL_TYPE_PRE_1_19 = "default"
+DEFAULT_LEVEL_TYPE_1_19 = "minecraft\\:normal"
 
 ALL_PROPERTIES = [
     "port",
     "maxp",
-    "onli"
+    "onli",
+    "levt"
 ]
 
-def get_properties(server_path: str) -> dict[str, Any]:
+# how many different property args are allowed
+PROPERTY_ARGS_COUNT = len(ALL_PROPERTIES)
+
+def get_properties(server_path: str, server_version: McVersion) -> dict[str, Any]:
     """Return the currently stored properties"""
 
-    return parse_properties_args(server_path, None)
+    return parse_properties_args(server_path, None, server_version)
 
-def parse_properties_args(server_path: str, server_property_args: dict | None) -> dict[str, Any]:
+def parse_properties_args(server_path: str, server_property_args: dict | None, server_version: McVersion) \
+                          -> dict[str, Any]:
     """Parse the given server_properties_args and provide defaults for missing values"""
 
     if server_property_args is None:
@@ -51,6 +58,9 @@ def parse_properties_args(server_path: str, server_property_args: dict | None) -
             if "onli" not in server_property_args:
                 if "online-mode=" in line:
                     server_property_args["onli"] = line.split("=")[1]
+            if "levt" not in server_property_args:
+                if "level-type=" in line:
+                    server_property_args["levt"] = line.split("=")[1]
 
     # fall back to default values
     if "port" not in server_property_args:
@@ -59,6 +69,24 @@ def parse_properties_args(server_path: str, server_property_args: dict | None) -
         server_property_args["maxp"] = DEFAULT_MAX_PLAYERS
     if "onli" not in server_property_args:
         server_property_args["onli"] = DEFAULT_ONLINE_MODE
+    if "levt" not in server_property_args:
+        if server_version.id < McVersion.version_name_to_id("1.19"):
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_PRE_1_19
+        else:
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_1_19
+
+    # set default level type to the correct version
+    if server_version.id < McVersion.version_name_to_id("1.19"):
+        if server_property_args["levt"] == DEFAULT_LEVEL_TYPE_1_19:
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_PRE_1_19
+        elif re.search(r"^minecraft\\\:*", server_property_args["levt"]) is not None:
+            server_property_args["levt"] = server_property_args["levt"].replace("minecraft\\:", "")
+
+    if server_version.id >= McVersion.version_name_to_id("1.19"):
+        if server_property_args["levt"] == DEFAULT_LEVEL_TYPE_PRE_1_19:
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_1_19
+        elif re.search(r"^minecraft\\\:*", server_property_args["levt"]) is None:
+            server_property_args["levt"] = "minecraft\\:" + server_property_args["levt"]
 
     return server_property_args
 
@@ -88,6 +116,9 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
         if "online-mode=" in line:
             lines[index] = f"online-mode={server_property_args['onli']}\n"
             missing_props.remove("onli")
+        if "level-type=" in line:
+            lines[index] = f"level-type={server_property_args['levt']}\n"
+            missing_props.remove("levt")
 
     # add missing properties
     if "port" in missing_props:
@@ -96,6 +127,8 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
         lines.append(f"max-players={server_property_args['maxp']}\n")
     if "onli" in missing_props:
         lines.append(f"online-mode={server_property_args['onli']}\n")
+    if "levt" in missing_props:
+        lines.append(f"level-type={server_property_args["levt"]}\n")
 
     with open(props_path, "w", encoding="utf8") as properties:
         properties.writelines(lines)

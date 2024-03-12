@@ -26,11 +26,13 @@ class Wrapper():
         # delete old logfile
         logger.delete_logs()
 
-        prop_args_clean = server_properties_helper.parse_properties_args(self.server_path, server_property_args)
-        server_properties_helper.save_properties(self.server_path, prop_args_clean)
+        self._server_builder = ServerBuilder.from_jar(jarfile_path)
 
-        self._server_builder = ServerBuilder.from_jar(jarfile_path) \
-                                            .port(prop_args_clean["port"])
+        prop_args_clean = server_properties_helper.parse_properties_args(self.server_path,
+                                                                         server_property_args,
+                                                                         self._server_builder._mcv)
+        server_properties_helper.save_properties(self.server_path, prop_args_clean)
+        self._server_builder.port(prop_args_clean["port"])
 
         if server_start_command is not None:
             self._server_builder.start_command(server_start_command)

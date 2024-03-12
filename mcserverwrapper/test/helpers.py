@@ -83,7 +83,8 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     server_property_args = None
     if offline_mode:
         server_property_args = {
-            "onli": "false"
+            "onli": "false",
+            "levt": "flat"
         }
 
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,

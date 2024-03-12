@@ -52,17 +52,30 @@ class McVersion:
         self.name = name
         self.type = version_type
 
-        split_name = [int(item) for item in name.split(".")]
-        if len(split_name) == 2:
-            self.id = split_name[0] * 10**4 + split_name[1] * 10**2
-        elif len(split_name) == 3:
-            self.id = split_name[0] * 10**4 + split_name[1] * 10**2 + split_name[2]
-        else:
-            raise ValueError(f"Expected to version to have at most 3 subparts, but received {split_name}")
+        self.id = McVersion.version_name_to_id(name)
 
     name: str
     type: int
     id: int
+
+    @staticmethod
+    def version_name_to_id(name: str) -> int:
+        """
+        Convert the given version name (e.g. "1.7.10") to its id (e.g. 10710)
+
+        Args:
+            name (str): version name to be converted
+        Returns:
+            int: the version id
+        """
+
+        split_name = [int(item) for item in name.split(".")]
+        if len(split_name) == 2:
+            return split_name[0] * 10**4 + split_name[1] * 10**2
+        if len(split_name) == 3:
+            return split_name[0] * 10**4 + split_name[1] * 10**2 + split_name[2]
+
+        raise ValueError(f"Expected to version to have 2 or 3 subparts, but received {split_name} in version {name}")
 
     def __str__(self) -> str:
         if self.type == McVersionType.VANILLA:
