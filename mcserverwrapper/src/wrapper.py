@@ -87,7 +87,7 @@ class Wrapper():
         Returns:
             McVersion: The servers' version
         """
-        
+
         return self.server.version
 
     def _run_temp_server(self):
