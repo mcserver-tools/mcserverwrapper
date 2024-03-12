@@ -1,7 +1,10 @@
+"""Module containing everything regarding to minecraft versions"""
+
 import re
 
-
 class McVersionType:
+    """Enum containing the different Minecraft version types"""
+
     UNKNOWN = 0
     VANILLA = 1
     SNAPSHOT = 2
@@ -12,6 +15,8 @@ class McVersionType:
 
     @staticmethod
     def get_all() -> dict[str, int]:
+        """Return all different version types"""
+
         return {
             "UNKNOWN": 0,
             "VANILLA": 1,
@@ -23,23 +28,29 @@ class McVersionType:
         }
 
     @staticmethod
-    def get_name(type: int) -> str:
-        for name, type_id in McVersionType.get_all().values():
-            if type_id == type:
+    def get_name(type_in: int) -> str:
+        """Get the name of a given mc version type"""
+
+        for name, type_id in McVersionType.get_all().items():
+            if type_id == type_in:
                 return name
 
+        raise ValueError(f"Version type with id {type_in} not found")
+
 class McVersion:
-    def __init__(self, name: str, type: int) -> None:
+    """Class representing the version and version type of a minecraft server"""
+
+    def __init__(self, name: str, version_type: int) -> None:
         if not isinstance(name, str):
             raise TypeError(f"Expected str, got {type(name)}")
-        if not isinstance(type, int):
-            raise TypeError(f"Expected int, got {type(type)}")
-        
+        if not isinstance(version_type, int):
+            raise TypeError(f"Expected int, got {type(version_type)}")
+
         if re.search(r"^1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", name) is None:
             raise ValueError(f"Expected version regex to match with {name}")
 
         self.name = name
-        self.type = type
+        self.type = version_type
 
         split_name = [int(item) for item in name.split(".")]
         if len(split_name) == 2:
@@ -56,5 +67,5 @@ class McVersion:
     def __str__(self) -> str:
         if self.type == McVersionType.VANILLA:
             return f"{self.name}"
-        else:
-            return f"{McVersionType.get_name(self.type)} {self.name}"
+
+        return f"{McVersionType.get_name(self.type)} {self.name}"

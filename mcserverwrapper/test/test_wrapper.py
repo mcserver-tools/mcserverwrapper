@@ -1,14 +1,13 @@
 """Module containing tests for the mcserverwrapper"""
 
 import os
-from multiprocessing import Process
 from time import sleep
 from datetime import datetime, timedelta
 
 import pytest
 
 from mcserverwrapper import Wrapper
-from .helpers import assert_port_is_free, download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
+from .helpers import assert_port_is_free, download_file, connect_mineflayer, setup_workspace, \
                      run_vanilla_test_url, run_vanilla_test
 from .testable_thread import TestableThread
 
@@ -77,7 +76,9 @@ def test_mineflayer(newest_server_jar):
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
-    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar), server_start_command=start_cmd, print_output=False)
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+                      server_start_command=start_cmd,
+                      print_output=False)
     wrapper.startup()
     assert wrapper.server_running()
     while not wrapper.output_queue.empty():
@@ -105,7 +106,8 @@ def _test_invalid_start_params(newest_server_jar):
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"))
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+                      server_start_command=start_cmd,
+                      print_output=False)
     with pytest.raises(KeyboardInterrupt):
         wrapper.startup()
