@@ -12,6 +12,17 @@ DEFAULT_PORT = 25565
 DEFAULT_MAX_PLAYERS = 20
 DEFAULT_ONLINE_MODE = "true"
 
+ALL_PROPERTIES = [
+    "port",
+    "maxp",
+    "onli"
+]
+
+def get_properties(server_path: str) -> dict[str, Any]:
+    """Return the currently stored properties"""
+
+    return parse_properties_args(server_path, None)
+
 def parse_properties_args(server_path: str, server_property_args: dict | None) -> dict[str, Any]:
     """Parse the given server_properties_args and provide defaults for missing values"""
 
@@ -26,22 +37,18 @@ def parse_properties_args(server_path: str, server_property_args: dict | None) -
         with open(props_path, "r", encoding="utf8") as props_file:
             lines = props_file.read().splitlines()
 
-        if "port" not in server_property_args:
-            for line in lines:
+        for line in lines:
+            if "port" not in server_property_args:
                 if "server-port=" in line:
                     port_string = line.split("=")[1]
                     if port_string.isdecimal():
                         server_property_args["port"] = int(port_string)
-
-        if "maxp" not in server_property_args:
-            for line in lines:
+            if "maxp" not in server_property_args:
                 if "max-players=" in line:
                     maxp_string = line.split("=")[1]
                     if maxp_string.isdecimal():
                         server_property_args["maxp"] = int(maxp_string)
-
-        if "onli" not in server_property_args:
-            for line in lines:
+            if "onli" not in server_property_args:
                 if "online-mode=" in line:
                     server_property_args["onli"] = line.split("=")[1]
 
@@ -62,24 +69,32 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
 
     props_path = os.path.join(server_path, "server.properties")
     if not os.path.isfile(props_path):
-        raise FileNotFoundError("File server.properties does not exist")
+        # create empty file
+        with open(props_path, "w+", encoding="utf8"):
+            pass
 
     with open(props_path, "r", encoding="utf8") as properties:
         lines = properties.readlines()
 
+    # update existing props
+    missing_props = ALL_PROPERTIES.copy()
     for index, line in enumerate(lines):
         if "server-port=" in line:
             lines[index] = f"server-port={server_property_args['port']}\n"
+            missing_props.remove("port")
         if "max-players=" in line:
             lines[index] = f"max-players={server_property_args['maxp']}\n"
+            missing_props.remove("maxp")
         if "online-mode=" in line:
             lines[index] = f"online-mode={server_property_args['onli']}\n"
+            missing_props.remove("onli")
 
-    if "server-port=" not in lines:
+    # add missing properties
+    if "port" in missing_props:
         lines.append(f"server-port={server_property_args['port']}\n")
-    if "max-players=" not in lines:
+    if "maxp" in missing_props:
         lines.append(f"max-players={server_property_args['maxp']}\n")
-    if "online-mode=" not in lines:
+    if "onli" in missing_props:
         lines.append(f"online-mode={server_property_args['onli']}\n")
 
     with open(props_path, "w", encoding="utf8") as properties:
@@ -92,7 +107,7 @@ def _validate_property_args(server_property_args: dict[str, Any]):
         raise ValueError(f"Incorrect length of elements '{len(server_property_args)}'" + \
                          f" for server_property_args, expected '{PROPERTY_ARGS_COUNT}'")
 
-    required_keys = ["port", "maxp", "onli"]
+    required_keys = ALL_PROPERTIES.copy()
     for k in required_keys:
         if not k in server_property_args:
             raise KeyError(f"Missing key '{k}' in server_property_property_args")

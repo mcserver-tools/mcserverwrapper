@@ -5,6 +5,27 @@ import os
 
 from mcserverwrapper.src import server_properties_helper as sph
 
+def test_get_mixed_params():
+    """Tests the helper with mixed params"""
+
+    props = {
+        "server-port": 25506,
+        "max-players": 18,
+        "some-unknown-prop": "hehe",
+        "online-mode": "true"
+    }
+
+    props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
+    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
+        props_file.write("\n".join([f"{key}={value}" for key, value in props.items()]))
+
+    result = sph.get_properties(props_path)
+
+    assert len(result) == 3
+    assert result["maxp"] == props["max-players"]
+    assert result["onli"] == props["online-mode"]
+    assert result["port"] == props["server-port"]
+
 def test_parse_custom_params():
     """Tests the helper with custom params"""
 
@@ -37,6 +58,7 @@ def test_parse_default_params():
     assert "maxp" not in props
     assert "onli" not in props
 
+    assert len(result) == 3
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
@@ -65,6 +87,7 @@ def test_params_with_file():
     assert props["maxp"] == 22
     assert "onli" not in props
 
+    assert len(result) == 3
     assert result["port"] == 25599
     assert result["maxp"] == 22
     assert result["onli"] == "true"
@@ -83,6 +106,7 @@ def test_parse_mixed_params_1():
     assert "maxp" not in props
     assert "onli" not in props
 
+    assert len(result) == 3
     assert result["port"] == 25541
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
@@ -102,6 +126,7 @@ def test_parse_mixed_params_2():
     assert props["maxp"] == 43
     assert props["onli"] == "false"
 
+    assert len(result) == 3
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == 43
     assert result["onli"] == "false"
@@ -135,6 +160,7 @@ def test_save_existing():
     with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
+    assert len(lines) == 5
     assert lines[0] == "server-port=25546"
     assert lines[1] == "some-other-prop=haha"
     assert lines[2] == "max-players=21"
@@ -167,6 +193,7 @@ def test_save_new():
     with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
+    assert len(lines) == 5
     assert lines[0] == "some-other-prop=haha"
     assert lines[1] == "a-final-prop=aha"
     assert lines[2] == "server-port=25546"
