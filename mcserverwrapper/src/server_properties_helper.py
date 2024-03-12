@@ -137,7 +137,7 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
     if "onli" in missing_props:
         lines.append(f"online-mode={server_property_args['onli']}\n")
     if "levt" in missing_props:
-        lines.append(f"level-type={server_property_args["levt"]}\n")
+        lines.append(f"level-type={server_property_args['levt']}\n")
 
     with open(props_path, "w", encoding="utf8") as properties:
         properties.writelines(lines)

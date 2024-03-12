@@ -11,8 +11,8 @@ from time import sleep
 from .util import logger
 
 from .server import ServerBuilder
-from . import server_properties_helper
 from .mcversion import McVersion
+from ..src import server_properties_helper
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""

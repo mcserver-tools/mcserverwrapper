@@ -1,5 +1,7 @@
 """Module containing everything regarding to minecraft versions"""
 
+from __future__ import annotations
+
 import re
 
 class McVersionType:

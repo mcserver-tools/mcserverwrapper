@@ -3,8 +3,8 @@
 import pathlib
 import os
 
-from mcserverwrapper.src import server_properties_helper as sph
 from mcserverwrapper.src.mcversion import McVersion, McVersionType
+from ..src import server_properties_helper as sph
 
 def test_get_mixed_params():
     """Tests the helper with mixed params"""

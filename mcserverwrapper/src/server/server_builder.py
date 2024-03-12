@@ -95,9 +95,8 @@ class ServerBuilder:
         server_path = pathlib.Path(self._jar_path).parent.resolve()
 
         server = None
-        match self._mcv.type:
-            case McVersionType.VANILLA:
-                server = VanillaServer(server_path, self._mcv, self._port, self._start_cmd)
+        if self._mcv.type == McVersionType.VANILLA:
+            server = VanillaServer(server_path, self._mcv, self._port, self._start_cmd)
 
         assert server is not None
         return server
