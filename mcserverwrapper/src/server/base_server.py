@@ -1,4 +1,4 @@
-"""A module ocntining the server class"""
+"""A module contining the base server class"""
 
 from __future__ import annotations
 
@@ -16,17 +16,19 @@ from typing import Generator
 import pexpect
 from pexpect import popen_spawn
 
-from . import info_getter, logger
+from ..mcversion import McVersion
+from ..util import info_getter, logger
 
-class Server():
-    """The core of the wrapper, communicates directly with the minecraft servers"""
+class BaseServer:
+    """The base server, containing server type-independent functionality"""
 
-    def __init__(self, server_path: str) -> None:
-        self._server_path = server_path
+    def __init__(self, server_path: str, version: McVersion) -> None:
+        self.server_path = server_path
+        self.version = version
         self.child = None
         self._port = None
-        self._version = None
-        self._version_type = None
+    
+    VERSION_TYPE = None
 
     def start(self, command, cwd=None, blocking=True):
         """Starts the minecraft server"""
@@ -35,8 +37,8 @@ class Server():
         self.child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
 
         # wait for files to get generated or server to exit
-        while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) \
-               or not os.path.isfile(os.path.join(self._server_path, "eula.txt"))):
+        while (not os.path.isfile(os.path.join(self.server_path, "./server.properties")) \
+               or not os.path.isfile(os.path.join(self.server_path, "eula.txt"))):
             sleep(0.1)
 
         # read the port from the server.properties file
@@ -64,24 +66,10 @@ class Server():
         else:
             self.child.kill(signal.SIGTERM)
 
-    def execute_command(self, command: str):
+    def execute_command(self, command: str) -> None:
         """Send a given command to the server"""
 
-        # vanilla server commands must start with a '/'
-        if self._version_type in ["vanilla", "snapshot"] and not command.startswith("/"):
-            command = "/" + command
-        # paper server commands don't start with a '/'
-        elif self._version_type in ["paper", "spigot", "bukkit"] and command.startswith("/"):
-            command = command[1::]
-
         self.child.sendline(command)
-
-        if command == "/stop":
-            logger.log("Stopping server")
-            status = self.get_child_status(20)
-            if status is None:
-                logger.log("Server did not stop within 20 seconds")
-                self.kill()
 
     def get_child_status(self, timeout: int) -> int | None:
         """
@@ -153,7 +141,7 @@ class Server():
     def _read_port_from_properties(self):
         """Reads and stores the port from the server.properties file"""
 
-        with open(os.path.join(self._server_path, "server.properties"), "r", encoding="utf8") as properties_file:
+        with open(os.path.join(self.server_path, "server.properties"), "r", encoding="utf8") as properties_file:
             lines = properties_file.read().splitlines()
         for line in lines:
             if "server-port" in line:
@@ -170,7 +158,14 @@ class Server():
             sleep(1)
             response = info_getter.ping_address_with_return("127.0.0.1", self._port)
 
-        self._parse_and_save_version_string(response.version.name)
+        # self._parse_and_save_version_string(response.version.name)
+
+    def _stopping(self):
+        logger.log("Stopping server")
+        status = self.get_child_status(20)
+        if status is None:
+            logger.log("Server did not stop within 20 seconds")
+            self.kill()
 
     def _format_output(self, raw_text: bytes) -> str:
         # remove line breaks
@@ -196,7 +191,7 @@ class Server():
     def _parse_and_save_version_string(self, version_raw):
         """Search the given version string to find out the version type"""
 
-        self._version = version_raw
+        self.version = version_raw
 
         if re.search(r"^1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
             self._version_type = "vanilla"

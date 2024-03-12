@@ -12,65 +12,7 @@ from .helpers import assert_port_is_free, download_file, connect_mineflayer, get
                      run_vanilla_test_url, run_vanilla_test
 from .testable_thread import TestableThread
 
-def _test_all_vanilla_cli():
-    """Tests all of the vanilla minecraft versions"""
-
-    with open("password.txt", "r", encoding="utf8") as f:
-        assert f.read()
-
-    setup_workspace()
-
-    working = 0
-    failed = 0
-    urls = get_vanilla_urls()
-    failed_urls = []
-    for url in [item[0] for item in urls]:
-        print(f"{working}/{failed + working} versions passed, " + \
-              f"{len(urls) - (failed + working)} remaining", end="\r")
-        try:
-            proc = Process(target=run_vanilla_test_url, args=[url,True,], daemon=True)
-            proc.start()
-
-            allowed_time = timedelta(minutes=5)
-            start_time = datetime.now()
-
-            while (datetime.now() - start_time) < allowed_time and proc.is_alive():
-                sleep(1)
-
-            if proc.is_alive():
-                proc.terminate()
-                raise TimeoutError("Test timed out")
-
-            working += 1
-        except TimeoutError as timeout_err:
-            if "Test timed out" in timeout_err.args:
-                failed += 1
-                failed_urls.append(url)
-                print(f"{working}/{failed + working} versions passed, " + \
-                      f"{len(urls) - (failed + working)} remaining")
-                print(timeout_err)
-                print(urls[[item[0] for item in urls].index(url)][1])
-                print(urls[[item[0] for item in urls].index(url) - 1][1])
-                return
-            raise timeout_err
-        except Exception as exception: # pylint: disable=broad-exception-caught
-            failed += 1
-            failed_urls.append(url)
-            print(f"{working}/{failed + working} versions passed, " + \
-                  f"{len(urls) - (failed + working)} remaining")
-            print(exception)
-            print(urls[[item[0] for item in urls].index(url)][1])
-            print(urls[[item[0] for item in urls].index(url) - 1][1])
-            return
-
-    print(f"Failed urls:{' '*20}")
-    for url in failed_urls:
-        print(url)
-
-    print(f"{working}/{failed + working} versions passed, " + \
-          f"{len(urls) - (failed + working)} remaining")
-
-def _test_all_vanilla(jar_version_tuple):
+def test_all_vanilla(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
     url, name = jar_version_tuple
@@ -135,8 +77,7 @@ def test_mineflayer(newest_server_jar):
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"))
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar), server_start_command=start_cmd, print_output=False)
     wrapper.startup()
     assert wrapper.server_running()
     while not wrapper.output_queue.empty():

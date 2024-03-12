@@ -26,8 +26,8 @@ def main():
 def main2():
     """Function used for testing, don't call this!"""
 
-    wrapper = Wrapper(server_path=os.path.join(pathlib.Path(__file__).parent.parent.resolve(),
-                                               "mcserverwrapper", "test", "temp"),
+    wrapper = Wrapper(os.path.join(pathlib.Path(__file__).parent.parent.resolve(),
+                                               "mcserverwrapper", "test", "temp", "server.jar"),
                       print_output=True)
 
     try:
@@ -41,5 +41,5 @@ def main2():
         raise e
 
 if __name__ == "__main__":
-    main()
-    # main2()
+    # main()
+    main2()

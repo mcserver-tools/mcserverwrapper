@@ -86,8 +86,7 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
             "onli": "false"
         }
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"),
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
                       server_property_args=server_property_args)
     wrapper.startup()
     assert wrapper.server_running()
@@ -172,28 +171,25 @@ def get_vanilla_urls():
     """Function written by @Pfefan"""
 
     hostname = "https://mcversions.net/"
-    page = requests.get(hostname, timeout=5)
+    session = requests.Session()
+    main_page = session.get(hostname, timeout=5)
     links = []
-    counter = 0
-    soup = BeautifulSoup(page.content, 'html.parser')
-    for text in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-2 px-3 bg-green-700 ' + \
+    soup = BeautifulSoup(main_page.content, 'html.parser')
+    base_links = soup.find_all('a',{'class':'text-xs whitespace-nowrap py-2 px-3 bg-green-700 ' + \
                                    'hover:bg-green-900 rounded text-white no-underline ' + \
-                                   'font-bold transition-colors duration-200'}):
-        version_raw = text.get('href')
+                                   'font-bold transition-colors duration-200'})
+    raw_version_urls = [link.get('href') for link in base_links]
+    for version_raw in raw_version_urls:
         if re.match(r"^/download/1\...?.?.?$", version_raw):
             version_name = version_raw.rsplit("/", maxsplit=1)[1]
             if _version_valid(version_name):
                 hostname = "https://mcversions.net/" + version_raw
-                page = requests.get(hostname, timeout=5)
+                page = session.get(hostname, timeout=5)
                 soup = BeautifulSoup(page.content, 'html.parser')
-                for text2 in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
+                for server_jar_link in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
                                             'bg-green-700 hover:bg-green-900 rounded text-white ' + \
                                             'no-underline font-bold transition-colors duration-200'}):
-                    links.append((text2.get('href'), version_name))
-                    counter += 1
-                    print(f"Found {counter:3.0f} vanilla version urls", end="\r")
-
-    print(f"Found {counter:3.0f} vanilla version urls")
+                    links.append((server_jar_link.get('href'), version_name))
     return links
 
 def _version_valid(version):

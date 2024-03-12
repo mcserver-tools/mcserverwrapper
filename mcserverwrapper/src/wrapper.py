@@ -3,26 +3,28 @@
 import atexit
 import os
 import os.path
+import pathlib
 import sys
 from queue import Queue
 from threading import Thread
 from time import sleep
 
-from .server import Server
-from . import logger, server_properties_helper
+from .util import logger
+
+from .server import ServerBuilder
+from . import server_properties_helper
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
-    def __init__(self, server_start_command=None, server_property_args=None, server_path=None,
+    def __init__(self, jarfile_path: str = "server.jar", server_start_command=None, server_property_args=None,
                  print_output=True) -> None:
-        if server_path is None:
-            server_path = os.getcwd()
-        self.server_path = server_path
+        self.server_jar = jarfile_path
+        self.server_path = pathlib.Path(jarfile_path).parent.resolve()
 
-        logger.setup(server_path)
+        logger.setup(self.server_path)
 
         if server_start_command is not None:
             self.server_start_command = server_start_command
@@ -31,9 +33,9 @@ class Wrapper():
         else:
             self.server_start_command = DEFAULT_START_CMD
 
-        self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
+        self.server_property_args = server_properties_helper.parse_properties_args(self.server_path, server_property_args)
 
-        self.server = Server(self.server_path)
+        self.server = ServerBuilder.from_jar(jarfile_path).build()
         atexit.register(self.stop)
 
         # delete old logfile
@@ -86,7 +88,7 @@ class Wrapper():
     def _run_temp_server(self):
         """Start a temporary server to generate server.properties and eula.txt"""
 
-        tempserver = Server(self.server_path)
+        tempserver = ServerBuilder.from_jar(self.server_jar).build()
         atexit.register(tempserver.stop)
 
         try:
