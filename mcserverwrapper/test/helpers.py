@@ -22,9 +22,15 @@ mineflayer = require('mineflayer')
 def setup_workspace():
     """Setup the testing folder"""
 
-    if os.path.isdir("testdir"):
-        shutil.rmtree("testdir")
-    os.makedirs("testdir", exist_ok=True)
+    try:
+        if os.path.isdir("testdir"):
+            shutil.rmtree("testdir")
+        os.makedirs("testdir", exist_ok=True)
+    except PermissionError as e:
+        pytest.skip("cannot access testdir")
+
+        if "[WinError 32]" in e.args:
+            pytest.skip("cannot access testdir")
 
 def reset_workspace():
     """Delete everything inside the testing folder"""
@@ -97,7 +103,8 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     # MineFlayer doesn't (yet) support 1.7.10
     # https://github.com/PrismarineJS/mineflayer/issues/432
-    if version_name != "1.7.10":
+    # the other versions fail because of missing protocol data
+    if version_name not in ["1.14.2", "1.9.2", "1.9.1", "1.7.10"]:
         bot = connect_mineflayer(offline_mode=offline_mode)
         assert bot is not None
 
