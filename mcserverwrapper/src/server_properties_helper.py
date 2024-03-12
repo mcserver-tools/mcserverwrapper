@@ -3,16 +3,9 @@
 from __future__ import annotations
 
 import os
-import re
 from typing import Any
 
 from .mcversion import McVersion
-
-DEFAULT_PORT = 25565
-DEFAULT_MAX_PLAYERS = 20
-DEFAULT_ONLINE_MODE = "true"
-DEFAULT_LEVEL_TYPE_PRE_1_19 = "default"
-DEFAULT_LEVEL_TYPE_1_19 = "minecraft\\:normal"
 
 ALL_PROPERTIES = [
     "port",
@@ -20,6 +13,23 @@ ALL_PROPERTIES = [
     "onli",
     "levt"
 ]
+
+LEVEL_TYPES = {
+    "old": {
+        "default": "default",
+        "flat": "flat"
+    },
+    "post_1_19": {
+        "default": "minecraft\\:normal",
+        "flat": "minecraft\\:flat"
+    }
+}
+
+DEFAULT_PORT = 25565
+DEFAULT_MAX_PLAYERS = 20
+DEFAULT_ONLINE_MODE = "true"
+DEFAULT_LEVEL_TYPE_OLD = LEVEL_TYPES["old"]["default"]
+DEFAULT_LEVEL_TYPE_POST_1_19 = LEVEL_TYPES["post_1_19"]["default"]
 
 # how many different property args are allowed
 PROPERTY_ARGS_COUNT = len(ALL_PROPERTIES)
@@ -71,22 +81,21 @@ def parse_properties_args(server_path: str, server_property_args: dict | None, s
         server_property_args["onli"] = DEFAULT_ONLINE_MODE
     if "levt" not in server_property_args:
         if server_version.id < McVersion.version_name_to_id("1.19"):
-            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_PRE_1_19
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_OLD
         else:
-            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_1_19
+            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_POST_1_19
 
-    # set default level type to the correct version
+    # convert level types
     if server_version.id < McVersion.version_name_to_id("1.19"):
-        if server_property_args["levt"] == DEFAULT_LEVEL_TYPE_1_19:
-            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_PRE_1_19
-        elif re.search(r"^minecraft\\\:*", server_property_args["levt"]) is not None:
-            server_property_args["levt"] = server_property_args["levt"].replace("minecraft\\:", "")
-
+        if server_property_args["levt"] in LEVEL_TYPES["post_1_19"].values():
+            for key, value in LEVEL_TYPES["post_1_19"].items():
+                if value == server_property_args["levt"]:
+                    server_property_args["levt"] = LEVEL_TYPES["old"][key]
     if server_version.id >= McVersion.version_name_to_id("1.19"):
-        if server_property_args["levt"] == DEFAULT_LEVEL_TYPE_PRE_1_19:
-            server_property_args["levt"] = DEFAULT_LEVEL_TYPE_1_19
-        elif re.search(r"^minecraft\\\:*", server_property_args["levt"]) is None:
-            server_property_args["levt"] = "minecraft\\:" + server_property_args["levt"]
+        if server_property_args["levt"] in LEVEL_TYPES["old"].values():
+            for key, value in LEVEL_TYPES["old"].items():
+                if value == server_property_args["levt"]:
+                    server_property_args["levt"] = LEVEL_TYPES["post_1_19"][key]
 
     return server_property_args
 

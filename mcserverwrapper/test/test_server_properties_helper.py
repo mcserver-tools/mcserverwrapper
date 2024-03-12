@@ -68,7 +68,7 @@ def test_parse_default_params():
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
-    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_POST_1_19
 
 def test_params_with_file():
     """Tests the helper with a server.properties file"""
@@ -118,7 +118,7 @@ def test_parse_mixed_params_1():
     assert result["port"] == 25541
     assert result["maxp"] == sph.DEFAULT_MAX_PLAYERS
     assert result["onli"] == sph.DEFAULT_ONLINE_MODE
-    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_POST_1_19
 
 def test_parse_mixed_params_2():
     """Tests the helper with custom and default params"""
@@ -140,7 +140,7 @@ def test_parse_mixed_params_2():
     assert result["port"] == sph.DEFAULT_PORT
     assert result["maxp"] == 43
     assert result["onli"] == "false"
-    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_1_19
+    assert result["levt"] == sph.DEFAULT_LEVEL_TYPE_POST_1_19
 
 def test_save_existing():
     """Tests the helper save function with valid params"""
@@ -159,7 +159,7 @@ def test_save_existing():
         "port": 25546,
         "maxp": 21,
         "onli": "true",
-        "levt": sph.DEFAULT_LEVEL_TYPE_1_19
+        "levt": sph.DEFAULT_LEVEL_TYPE_POST_1_19
     }
 
     sph.save_properties(props_path, props)
