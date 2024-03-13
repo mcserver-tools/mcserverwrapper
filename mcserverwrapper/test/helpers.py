@@ -56,7 +56,7 @@ def assert_port_is_free(port: int = 25565, strict=True) -> bool:
                 return False
         # linux error?
         except socket.error as e:
-            if e.errno == errno.EADDRINUSE:
+            if e.errno == errno.EADDRINUSE or e.errno == errno.ECONNREFUSED:
                 if strict:
                     pytest.skip(reason=f"Port {port} is in use")
                 else:
