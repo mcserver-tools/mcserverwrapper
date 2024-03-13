@@ -3,41 +3,42 @@
 import atexit
 import os
 import os.path
-import sys
+import pathlib
 from queue import Queue
 from threading import Thread
 from time import sleep
 
-from .server import Server
-from . import logger, server_properties_helper
+from .util import logger
 
-DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
+from .server import ServerBuilder
+from .mcversion import McVersion
+from ..src import server_properties_helper
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""
 
-    def __init__(self, server_start_command=None, server_property_args=None, server_path=None,
+    def __init__(self, jarfile_path: str = "server.jar", server_start_command=None, server_property_args=None,
                  print_output=True) -> None:
-        if server_path is None:
-            server_path = os.getcwd()
-        self.server_path = server_path
+        self.server_jar = jarfile_path
+        self.server_path = pathlib.Path(jarfile_path).parent.resolve()
 
-        logger.setup(server_path)
-
-        if server_start_command is not None:
-            self.server_start_command = server_start_command
-        elif len(sys.argv) == 2:
-            self.server_start_command = sys.argv[-1]
-        else:
-            self.server_start_command = DEFAULT_START_CMD
-
-        self.server_property_args = server_properties_helper.parse_properties_args(server_path, server_property_args)
-
-        self.server = Server(self.server_path)
-        atexit.register(self.stop)
-
+        logger.setup(self.server_path)
         # delete old logfile
         logger.delete_logs()
+
+        self._server_builder = ServerBuilder.from_jar(jarfile_path)
+
+        prop_args_clean = server_properties_helper.parse_properties_args(self.server_path,
+                                                                         server_property_args,
+                                                                         self._server_builder._mcv)
+        server_properties_helper.save_properties(self.server_path, prop_args_clean)
+        self._server_builder.port(prop_args_clean["port"])
+
+        if server_start_command is not None:
+            self._server_builder.start_command(server_start_command)
+
+        self.server = self._server_builder.build()
+        atexit.register(self.stop)
 
         self.output_queue = Queue()
         Thread(target=self._t_output_handler, args=[print_output,]).start()
@@ -55,9 +56,7 @@ class Wrapper():
         # always accept eula to recover from a previous crash
         self._accept_eula()
 
-        server_properties_helper.save_properties(self.server_path, self.server_property_args)
-
-        self.server.start(self.server_start_command, cwd=self.server_path, blocking=blocking)
+        self.server.start(blocking=blocking)
 
     def send_command(self, command, wait_time=0) -> None:
         """Sends and executes a command on the server, then waits for the given wait_time"""
@@ -83,14 +82,24 @@ class Wrapper():
 
         return self.server.is_running()
 
+    def get_version(self) -> McVersion:
+        """
+        Return the servers' version
+
+        Returns:
+            McVersion: The servers' version
+        """
+
+        return self.server.version
+
     def _run_temp_server(self):
         """Start a temporary server to generate server.properties and eula.txt"""
 
-        tempserver = Server(self.server_path)
+        tempserver = self._server_builder.build()
         atexit.register(tempserver.stop)
 
         try:
-            tempserver.start(self.server_start_command, cwd=self.server_path, blocking=False)
+            tempserver.start()
         except ValueError:
             # some versions only add an empty server.properties,
             # so just add the port and max players later

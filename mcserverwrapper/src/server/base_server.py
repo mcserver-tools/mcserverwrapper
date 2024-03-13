@@ -1,53 +1,48 @@
-"""A module ocntining the server class"""
+"""A module contining the base server class"""
 
 from __future__ import annotations
 
-import _thread
 import os.path
 import re
 import signal
 import sys
 from datetime import datetime, timedelta
 from subprocess import TimeoutExpired
-from threading import Thread
 from time import sleep
 from typing import Generator
 
 import pexpect
 from pexpect import popen_spawn
 
-from . import info_getter, logger
+from ..mcversion import McVersion
+from ..util import info_getter, logger
 
-class Server():
-    """The core of the wrapper, communicates directly with the minecraft servers"""
+class BaseServer:
+    """The base server, containing server type-independent functionality"""
 
-    def __init__(self, server_path: str) -> None:
-        self._server_path = server_path
-        self.child = None
-        self._port = None
-        self._version = None
-        self._version_type = None
+    def __init__(self, server_path: str, version: McVersion, port: int, start_cmd: str) -> None:
+        self.server_path = server_path
+        self.version = version
+        self._port = port
+        self._start_cmd = start_cmd
+        self._child = None
 
-    def start(self, command, cwd=None, blocking=True):
+    VERSION_TYPE = None
+
+    def start(self, blocking=True):
         """Starts the minecraft server"""
 
         # starts the server process
-        self.child = popen_spawn.PopenSpawn(cmd=command, cwd=cwd, timeout=1)
+        self._child = popen_spawn.PopenSpawn(cmd=self._start_cmd, cwd=self.server_path, timeout=1)
 
         # wait for files to get generated or server to exit
-        while (not os.path.isfile(os.path.join(self._server_path, "./server.properties")) \
-               or not os.path.isfile(os.path.join(self._server_path, "eula.txt"))):
+        while (not os.path.isfile(os.path.join(self.server_path, "./server.properties")) \
+               or not os.path.isfile(os.path.join(self.server_path, "eula.txt"))):
             sleep(0.1)
-
-        # read the port from the server.properties file
-        self._read_port_from_properties()
 
         # if blocking is True, wait for the server to finish starting
         if blocking:
             self._wait_for_startup()
-        else:
-            # still call _wait_for_startup to save the version
-            Thread(target=self._wait_for_startup, daemon=True).start()
 
     def stop(self):
         """Stop the running server gracefully, and kills it if it doesn't stop within 20 seconds"""
@@ -60,28 +55,14 @@ class Server():
 
         logger.log("Killing server process")
         if sys.platform == "win32":
-            self.child.kill(signal.CTRL_C_EVENT)
+            self._child.kill(signal.CTRL_C_EVENT)
         else:
-            self.child.kill(signal.SIGTERM)
+            self._child.kill(signal.SIGTERM)
 
-    def execute_command(self, command: str):
+    def execute_command(self, command: str) -> None:
         """Send a given command to the server"""
 
-        # vanilla server commands must start with a '/'
-        if self._version_type in ["vanilla", "snapshot"] and not command.startswith("/"):
-            command = "/" + command
-        # paper server commands don't start with a '/'
-        elif self._version_type in ["paper", "spigot", "bukkit"] and command.startswith("/"):
-            command = command[1::]
-
-        self.child.sendline(command)
-
-        if command == "/stop":
-            logger.log("Stopping server")
-            status = self.get_child_status(20)
-            if status is None:
-                logger.log("Server did not stop within 20 seconds")
-                self.kill()
+        self._child.sendline(command)
 
     def get_child_status(self, timeout: int) -> int | None:
         """
@@ -90,7 +71,7 @@ class Server():
         """
 
         try:
-            status = self.child.proc.wait(timeout)
+            status = self._child.proc.wait(timeout)
             # server stopped
             return status
         except TimeoutExpired:
@@ -116,7 +97,7 @@ class Server():
                 raise TypeError(f"timeout expected type (int, float), not {type(timeout)}")
 
         # wait for the server to initialize
-        while self.child is None:
+        while self._child is None:
             sleep(0.1)
 
         output = b""
@@ -124,7 +105,7 @@ class Server():
         # read one char at a time, until the server exits
         while terminate_time > datetime.now():
             try:
-                output_char = bytes(self.child.read(1))
+                output_char = bytes(self._child.read(1))
 
                 if output == b"":
                     empties += 1
@@ -150,27 +131,20 @@ class Server():
 
         return ""
 
-    def _read_port_from_properties(self):
-        """Reads and stores the port from the server.properties file"""
-
-        with open(os.path.join(self._server_path, "server.properties"), "r", encoding="utf8") as properties_file:
-            lines = properties_file.read().splitlines()
-        for line in lines:
-            if "server-port" in line:
-                if line.split("=")[1].isdecimal():
-                    self._port = int(line.split("=")[1])
-        if self._port is None:
-            raise ValueError("Port couldn't be read from server.properties")
-
     def _wait_for_startup(self):
         """Waits for the server to finish starting and then stores its version"""
 
-        response = info_getter.ping_address_with_return("127.0.0.1", self._port)
-        while response is None:
-            sleep(1)
+        response = None
+        while response is None and self.get_child_status(1) is None:
             response = info_getter.ping_address_with_return("127.0.0.1", self._port)
+            sleep(1)
 
-        self._parse_and_save_version_string(response.version.name)
+    def _stopping(self):
+        logger.log("Stopping server")
+        status = self.get_child_status(20)
+        if status is None:
+            logger.log("Server did not stop within 20 seconds")
+            self.kill()
 
     def _format_output(self, raw_text: bytes) -> str:
         # remove line breaks
@@ -193,10 +167,11 @@ class Server():
 
         return text_str
 
+    # pylint: disable=attribute-defined-outside-init
     def _parse_and_save_version_string(self, version_raw):
         """Search the given version string to find out the version type"""
 
-        self._version = version_raw
+        self.version = version_raw
 
         if re.search(r"^1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
             self._version_type = "vanilla"
@@ -212,44 +187,4 @@ class Server():
             self._version_type = "bukkit"
         else:
             self._version_type = "unknown"
-
-    def _t_watchdog(self, exit_program_on_error):
-        has_started = False
-        ping_timeouts = 0
-        exit_watchdog = False
-
-        while not exit_watchdog:
-            if not has_started:
-                status = self.get_child_status(1)
-
-                # server startup failed
-                if status is not None:
-                    # exit watchdog on status 0, this means that the eula is not accepted
-                    if status == 0:
-                        exit_watchdog = True
-                    else:
-                        self._t_exit(exit_program_on_error)
-                        return
-                has_started = self.is_running()
-
-            # pylint: disable-next=condition-evals-to-constant
-            if False and has_started and not self.is_running():
-                if ping_timeouts > 5:
-                    self._t_exit(exit_program_on_error)
-                    return
-
-                ping_timeouts += 1
-                logger.log(f"server ping timed out {ping_timeouts} in a row")
-                sleep(5)
-            else:
-                ping_timeouts = 0
-
-    def _t_exit(self, exit_program_on_error):
-        sleep(3)
-        for line in self.read_output(3):
-            logger.log(line)
-        logger.log("Server has crashed, exiting...")
-        if exit_program_on_error:
-            os._exit(1)
-        else:
-            _thread.interrupt_main()
+    # pylint: enable=attribute-defined-outside-init

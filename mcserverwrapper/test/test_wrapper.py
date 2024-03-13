@@ -1,76 +1,18 @@
 """Module containing tests for the mcserverwrapper"""
 
 import os
-from multiprocessing import Process
+from random import randint
 from time import sleep
 from datetime import datetime, timedelta
 
 import pytest
 
 from mcserverwrapper import Wrapper
-from .helpers import assert_port_is_free, download_file, connect_mineflayer, get_vanilla_urls, setup_workspace, \
+from .helpers import assert_port_is_free, download_file, connect_mineflayer, setup_workspace, \
                      run_vanilla_test_url, run_vanilla_test
 from .testable_thread import TestableThread
 
-def _test_all_vanilla_cli():
-    """Tests all of the vanilla minecraft versions"""
-
-    with open("password.txt", "r", encoding="utf8") as f:
-        assert f.read()
-
-    setup_workspace()
-
-    working = 0
-    failed = 0
-    urls = get_vanilla_urls()
-    failed_urls = []
-    for url in [item[0] for item in urls]:
-        print(f"{working}/{failed + working} versions passed, " + \
-              f"{len(urls) - (failed + working)} remaining", end="\r")
-        try:
-            proc = Process(target=run_vanilla_test_url, args=[url,True,], daemon=True)
-            proc.start()
-
-            allowed_time = timedelta(minutes=5)
-            start_time = datetime.now()
-
-            while (datetime.now() - start_time) < allowed_time and proc.is_alive():
-                sleep(1)
-
-            if proc.is_alive():
-                proc.terminate()
-                raise TimeoutError("Test timed out")
-
-            working += 1
-        except TimeoutError as timeout_err:
-            if "Test timed out" in timeout_err.args:
-                failed += 1
-                failed_urls.append(url)
-                print(f"{working}/{failed + working} versions passed, " + \
-                      f"{len(urls) - (failed + working)} remaining")
-                print(timeout_err)
-                print(urls[[item[0] for item in urls].index(url)][1])
-                print(urls[[item[0] for item in urls].index(url) - 1][1])
-                return
-            raise timeout_err
-        except Exception as exception: # pylint: disable=broad-exception-caught
-            failed += 1
-            failed_urls.append(url)
-            print(f"{working}/{failed + working} versions passed, " + \
-                  f"{len(urls) - (failed + working)} remaining")
-            print(exception)
-            print(urls[[item[0] for item in urls].index(url)][1])
-            print(urls[[item[0] for item in urls].index(url) - 1][1])
-            return
-
-    print(f"Failed urls:{' '*20}")
-    for url in failed_urls:
-        print(url)
-
-    print(f"{working}/{failed + working} versions passed, " + \
-          f"{len(urls) - (failed + working)} remaining")
-
-def _test_all_vanilla(jar_version_tuple):
+def test_all_vanilla(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
     url, name = jar_version_tuple
@@ -131,12 +73,21 @@ def test_single_vanilla_offline(newest_server_jar):
 def test_mineflayer(newest_server_jar):
     """Test the mineflayer bot"""
 
-    assert_port_is_free()
+    port = 25565
+    while not assert_port_is_free(port, False):
+        port = randint(25500, 25600)
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"))
+    server_params = {
+        "port": port,
+        "untp": "false"
+    }
+
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+                      server_start_command=start_cmd,
+                      server_property_args=server_params,
+                      print_output=False)
     wrapper.startup()
     assert wrapper.server_running()
     while not wrapper.output_queue.empty():
@@ -148,7 +99,7 @@ def test_mineflayer(newest_server_jar):
     while "Hello World" not in line:
         line = wrapper.output_queue.get(timeout=5)
 
-    connect_mineflayer()
+    connect_mineflayer(port=port)
 
     line = ""
     while "I spawned" not in line:
@@ -164,7 +115,8 @@ def _test_invalid_start_params(newest_server_jar):
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"))
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+                      server_start_command=start_cmd,
+                      print_output=False)
     with pytest.raises(KeyboardInterrupt):
         wrapper.startup()

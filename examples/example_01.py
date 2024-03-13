@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     download_server_jar()
 
-    wrapper = Wrapper(server_path=server_path)
+    wrapper = Wrapper(os.path.join(server_path, "server.jar"))
     wrapper.startup()
     wrapper.send_command("/say hello minecraft")
     wrapper.stop()

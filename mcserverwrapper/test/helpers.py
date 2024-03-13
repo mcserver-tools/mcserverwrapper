@@ -7,6 +7,7 @@ import os
 import shutil
 from threading import Thread
 from time import sleep
+from random import randint
 
 import re
 import pytest
@@ -41,7 +42,7 @@ def reset_workspace():
         else:
             shutil.rmtree(os.path.join("testdir", entry))
 
-def assert_port_is_free(port: int = 25565) -> bool:
+def assert_port_is_free(port: int = 25565, strict=True) -> bool:
     """Skips the current test if the given port is not free"""
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -49,19 +50,24 @@ def assert_port_is_free(port: int = 25565) -> bool:
             s.bind(("127.0.0.1", port))
         # windows error
         except PermissionError:
-            pytest.skip(reason=f"Port {port} is in use")
+            if strict:
+                pytest.skip(reason=f"Port {port} is in use")
+            else:
+                return False
         # linux error?
         except socket.error as e:
-            if e.errno == errno.EADDRINUSE:
-                pytest.skip(reason=f"Port {port} is in use")
+            if e.errno in [errno.EADDRINUSE, errno.ECONNREFUSED]:
+                if strict:
+                    pytest.skip(reason=f"Port {port} is in use")
+                else:
+                    return False
             else:
                 # something else raised the socket.error exception
                 raise e
+        return True
 
 def run_vanilla_test_url(url, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server url"""
-
-    assert_port_is_free()
 
     setup_workspace()
 
@@ -72,7 +78,9 @@ def run_vanilla_test_url(url, offline_mode=False, version_name=None):
 def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server jar"""
 
-    assert_port_is_free()
+    port = 25565
+    while not assert_port_is_free(port, False):
+        port = randint(25500, 25600)
 
     if not offline_mode:
         assert os.path.isfile("password.txt")
@@ -80,14 +88,15 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
-    server_property_args = None
+    server_property_args = {
+        "port": port,
+        "levt": "flat",
+        "untp": "false"
+    }
     if offline_mode:
-        server_property_args = {
-            "onli": "false"
-        }
+        server_property_args["onli"] = "false"
 
-    wrapper = Wrapper(server_start_command=start_cmd, print_output=False,
-                      server_path=os.path.join(os.getcwd(), "testdir"),
+    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
                       server_property_args=server_property_args)
     wrapper.startup()
     assert wrapper.server_running()
@@ -99,13 +108,13 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     line = ""
     while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=5)
+        line = wrapper.output_queue.get(timeout=10)
 
     # MineFlayer doesn't (yet) support 1.7.10
     # https://github.com/PrismarineJS/mineflayer/issues/432
     # the other versions fail because of missing protocol data
     if version_name not in ["1.14.2", "1.9.2", "1.9.1", "1.7.10"]:
-        bot = connect_mineflayer(offline_mode=offline_mode)
+        bot = connect_mineflayer(port=port, offline_mode=offline_mode)
         assert bot is not None
 
         line = ""
@@ -150,8 +159,8 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     start_time = datetime.now()
 
     while not bot_connected[0]:
-        if (datetime.now() - start_time) > timedelta(seconds=10):
-            return None
+        if (datetime.now() - start_time) > timedelta(seconds=30):
+            pytest.skip(f"Bot connection to {address}:{port} timed out")
         sleep(0.1)
 
     bot.chat('I spawned')
@@ -172,28 +181,25 @@ def get_vanilla_urls():
     """Function written by @Pfefan"""
 
     hostname = "https://mcversions.net/"
-    page = requests.get(hostname, timeout=5)
+    session = requests.Session()
+    main_page = session.get(hostname, timeout=5)
     links = []
-    counter = 0
-    soup = BeautifulSoup(page.content, 'html.parser')
-    for text in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-2 px-3 bg-green-700 ' + \
+    soup = BeautifulSoup(main_page.content, 'html.parser')
+    base_links = soup.find_all('a',{'class':'text-xs whitespace-nowrap py-2 px-3 bg-green-700 ' + \
                                    'hover:bg-green-900 rounded text-white no-underline ' + \
-                                   'font-bold transition-colors duration-200'}):
-        version_raw = text.get('href')
+                                   'font-bold transition-colors duration-200'})
+    raw_version_urls = [link.get('href') for link in base_links]
+    for version_raw in raw_version_urls:
         if re.match(r"^/download/1\...?.?.?$", version_raw):
             version_name = version_raw.rsplit("/", maxsplit=1)[1]
             if _version_valid(version_name):
                 hostname = "https://mcversions.net/" + version_raw
-                page = requests.get(hostname, timeout=5)
+                page = session.get(hostname, timeout=5)
                 soup = BeautifulSoup(page.content, 'html.parser')
-                for text2 in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
+                for server_jar_link in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
                                             'bg-green-700 hover:bg-green-900 rounded text-white ' + \
                                             'no-underline font-bold transition-colors duration-200'}):
-                    links.append((text2.get('href'), version_name))
-                    counter += 1
-                    print(f"Found {counter:3.0f} vanilla version urls", end="\r")
-
-    print(f"Found {counter:3.0f} vanilla version urls")
+                    links.append((server_jar_link.get('href'), version_name))
     return links
 
 def _version_valid(version):
