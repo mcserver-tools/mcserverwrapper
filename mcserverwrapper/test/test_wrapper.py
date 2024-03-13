@@ -1,6 +1,7 @@
 """Module containing tests for the mcserverwrapper"""
 
 import os
+from random import randint
 from time import sleep
 from datetime import datetime, timedelta
 
@@ -72,12 +73,19 @@ def test_single_vanilla_offline(newest_server_jar):
 def test_mineflayer(newest_server_jar):
     """Test the mineflayer bot"""
 
-    assert_port_is_free()
+    port = 25565
+    while not assert_port_is_free(port, False):
+        port = randint(25500, 25600)
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
+    server_params = {
+        "port": port
+    }
+
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
                       server_start_command=start_cmd,
+                      server_property_args=server_params,
                       print_output=False)
     wrapper.startup()
     assert wrapper.server_running()

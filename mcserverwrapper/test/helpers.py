@@ -42,27 +42,32 @@ def reset_workspace():
         else:
             shutil.rmtree(os.path.join("testdir", entry))
 
-def assert_port_is_free(port: int = 25565) -> bool:
+def assert_port_is_free(port: int = 25565, strict=True) -> bool:
     """Skips the current test if the given port is not free"""
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
             s.bind(("127.0.0.1", port))
+            return True
         # windows error
         except PermissionError:
-            pytest.skip(reason=f"Port {port} is in use")
+            if strict:
+                pytest.skip(reason=f"Port {port} is in use")
+            else:
+                return False
         # linux error?
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
-                pytest.skip(reason=f"Port {port} is in use")
+                if strict:
+                    pytest.skip(reason=f"Port {port} is in use")
+                else:
+                    return False
             else:
                 # something else raised the socket.error exception
                 raise e
 
 def run_vanilla_test_url(url, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server url"""
-
-    assert_port_is_free()
 
     setup_workspace()
 
@@ -74,7 +79,7 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server jar"""
 
     port = 25565
-    while not assert_port_is_free(port):
+    while not assert_port_is_free(port, False):
         port = randint(25500, 25600)
 
     if not offline_mode:
