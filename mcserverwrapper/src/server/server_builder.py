@@ -146,7 +146,8 @@ class ServerBuilder:
                 if zip_fileinfo.filename == "net/minecraft/server/MinecraftServer.class":
                     mcs_class = zf.read(zip_fileinfo)
             if mcs_class is not None:
-                vers = [x.group() for x in re.finditer(r"1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?", mcs_class.decode("utf8", errors="ignore"))]
+                vers = [x.group() for x in re.finditer(r"1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?",
+                                                       mcs_class.decode("utf8", errors="ignore"))]
                 if len(vers) != 0:
                     return McVersion(vers[0], McVersionType.VANILLA)
 
