@@ -7,6 +7,7 @@ import os
 import shutil
 from threading import Thread
 from time import sleep
+from random import randint
 
 import re
 import pytest
@@ -72,7 +73,9 @@ def run_vanilla_test_url(url, offline_mode=False, version_name=None):
 def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server jar"""
 
-    assert_port_is_free()
+    port = 25565
+    while not assert_port_is_free(port):
+        port = randint(25500, 25600)
 
     if not offline_mode:
         assert os.path.isfile("password.txt")
@@ -80,12 +83,12 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
-    server_property_args = None
+    server_property_args = {
+        "port": port,
+        "levt": "flat"
+    }
     if offline_mode:
-        server_property_args = {
-            "onli": "false",
-            "levt": "flat"
-        }
+        server_property_args["onli"] = "false"
 
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
                       server_property_args=server_property_args)
