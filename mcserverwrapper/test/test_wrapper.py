@@ -98,7 +98,7 @@ def test_mineflayer(newest_server_jar):
     while "Hello World" not in line:
         line = wrapper.output_queue.get(timeout=5)
 
-    connect_mineflayer()
+    connect_mineflayer(port=port)
 
     line = ""
     while "I spawned" not in line:
