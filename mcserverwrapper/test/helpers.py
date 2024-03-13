@@ -48,7 +48,6 @@ def assert_port_is_free(port: int = 25565, strict=True) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
             s.bind(("127.0.0.1", port))
-            return True
         # windows error
         except PermissionError:
             if strict:
@@ -65,6 +64,7 @@ def assert_port_is_free(port: int = 25565, strict=True) -> bool:
             else:
                 # something else raised the socket.error exception
                 raise e
+        return True
 
 def run_vanilla_test_url(url, offline_mode=False, version_name=None):
     """Run all tests for a single vanilla minecraft server url"""
