@@ -11,7 +11,8 @@ ALL_PROPERTIES = [
     "port",
     "maxp",
     "onli",
-    "levt"
+    "levt",
+    "untp"
 ]
 
 LEVEL_TYPES = {
@@ -30,6 +31,7 @@ DEFAULT_MAX_PLAYERS = 20
 DEFAULT_ONLINE_MODE = "true"
 DEFAULT_LEVEL_TYPE_OLD = LEVEL_TYPES["old"]["default"]
 DEFAULT_LEVEL_TYPE_POST_1_19 = LEVEL_TYPES["post_1_19"]["default"]
+DEFAULT_USE_NATIVE_TRANSPORT = "false"
 
 # how many different property args are allowed
 PROPERTY_ARGS_COUNT = len(ALL_PROPERTIES)
@@ -71,6 +73,9 @@ def parse_properties_args(server_path: str, server_property_args: dict | None, s
             if "levt" not in server_property_args:
                 if "level-type=" in line:
                     server_property_args["levt"] = line.split("=")[1]
+            if "untp" not in server_property_args:
+                if "use-native-transport=" in line:
+                    server_property_args["untp"] = line.split("=")[1]
 
     # fall back to default values
     if "port" not in server_property_args:
@@ -84,6 +89,8 @@ def parse_properties_args(server_path: str, server_property_args: dict | None, s
             server_property_args["levt"] = DEFAULT_LEVEL_TYPE_OLD
         else:
             server_property_args["levt"] = DEFAULT_LEVEL_TYPE_POST_1_19
+    if "untp" not in server_property_args:
+        server_property_args["untp"] = DEFAULT_USE_NATIVE_TRANSPORT
 
     # convert level types
     if server_version.id < McVersion.version_name_to_id("1.19"):
@@ -128,6 +135,8 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
         if "level-type=" in line:
             lines[index] = f"level-type={server_property_args['levt']}\n"
             missing_props.remove("levt")
+        if "use-native-transport=" in line:
+            lines[index] = f"use-native-transport={server_property_args['untp']}\n"
 
     # add missing properties
     if "port" in missing_props:
@@ -138,6 +147,8 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
         lines.append(f"online-mode={server_property_args['onli']}\n")
     if "levt" in missing_props:
         lines.append(f"level-type={server_property_args['levt']}\n")
+    if "untp" in missing_props:
+        lines.append(f"use-native-transport={server_property_args['untp']}\n")
 
     with open(props_path, "w", encoding="utf8") as properties:
         properties.writelines(lines)

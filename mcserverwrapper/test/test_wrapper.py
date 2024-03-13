@@ -80,7 +80,8 @@ def test_mineflayer(newest_server_jar):
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
     server_params = {
-        "port": port
+        "port": port,
+        "untp": "false"
     }
 
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),

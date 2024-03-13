@@ -90,7 +90,8 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     server_property_args = {
         "port": port,
-        "levt": "flat"
+        "levt": "flat",
+        "untp": "false"
     }
     if offline_mode:
         server_property_args["onli"] = "false"
