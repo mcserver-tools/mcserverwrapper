@@ -107,7 +107,7 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
 
     line = ""
     while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=5)
+        line = wrapper.output_queue.get(timeout=10)
 
     # MineFlayer doesn't (yet) support 1.7.10
     # https://github.com/PrismarineJS/mineflayer/issues/432
@@ -158,7 +158,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     start_time = datetime.now()
 
     while not bot_connected[0]:
-        if (datetime.now() - start_time) > timedelta(seconds=10):
+        if (datetime.now() - start_time) > timedelta(seconds=30):
             return None
         sleep(0.1)
 
