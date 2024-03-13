@@ -85,6 +85,8 @@ def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
     if not offline_mode:
         assert os.path.isfile("password.txt")
         assert os.access("password.txt", os.R_OK)
+        with open("password.txt", "r", encoding="utf8") as f:
+            assert f.read() != ""
 
     start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
 
