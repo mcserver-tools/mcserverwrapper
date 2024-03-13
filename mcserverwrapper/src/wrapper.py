@@ -99,7 +99,7 @@ class Wrapper():
         atexit.register(tempserver.stop)
 
         try:
-            tempserver.start(blocking=False)
+            tempserver.start()
         except ValueError:
             # some versions only add an empty server.properties,
             # so just add the port and max players later
