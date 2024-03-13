@@ -10,3 +10,4 @@ jobs:
     uses: ./.github/workflows/define-pylint.yml
     with:
       python-version: ${{ matrix.python-version }}
+    secrets: inherit
