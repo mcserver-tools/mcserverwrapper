@@ -98,5 +98,5 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         tag: ${{ needs.tag.outputs.release-tag }}
-        artifacts: "dist/*"
+        artifacts: "dist/"
         bodyFile: "body.md"
