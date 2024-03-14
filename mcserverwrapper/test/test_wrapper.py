@@ -77,6 +77,11 @@ def test_mineflayer(newest_server_jar):
     while not assert_port_is_free(port, False):
         port = randint(25500, 25600)
 
+    assert os.path.isfile("password.txt")
+    assert os.access("password.txt", os.R_OK)
+    with open("password.txt", "r", encoding="utf8") as f:
+        assert f.read() != ""
+
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
     server_params = {
