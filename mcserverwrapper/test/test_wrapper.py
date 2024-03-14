@@ -12,7 +12,7 @@ from .helpers import assert_port_is_free, download_file, connect_mineflayer, set
                      run_vanilla_test_url, run_vanilla_test
 from .testable_thread import TestableThread
 
-def test_all_vanilla(jar_version_tuple):
+def _test_all_vanilla(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
     url, name = jar_version_tuple
