@@ -100,7 +100,8 @@ jobs:
     - name: Create new release
       uses: ncipollo/release-action@v1
       with:
-        tag: ${{ needs.tag.outputs.release-tag }}
+        tag: "${{ needs.tag.outputs.release-tag }}"
         commit: "main"
         artifacts: "dist/*"
         bodyFile: "body.md"
+        token: ${{ secrets.GITHUB_TOKEN }}
