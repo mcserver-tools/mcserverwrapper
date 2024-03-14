@@ -83,8 +83,8 @@ jobs:
       shell: bash
       run: |
         touch body.md
-        - name: Create new release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "dist/*"
-          bodyFile: "body.md"
+    - name: Create new release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "dist/*"
+        bodyFile: "body.md"
