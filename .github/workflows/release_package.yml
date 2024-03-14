@@ -66,7 +66,10 @@ jobs:
       id: check-tag
       with: 
         tag: ${{ steps.read-tag.outputs.release-tag }}
-    - run: echo "Tag exists!"
+    - name: Fail if tag exists
+      run: |
+        echo "Tag exists!"
+        exit 1
       if: steps.check-tag.outputs.exists == 'true' 
 
   release:
@@ -80,3 +83,8 @@ jobs:
       shell: bash
       run: |
         touch body.md
+        - name: Create new release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          bodyFile: "body.md"
