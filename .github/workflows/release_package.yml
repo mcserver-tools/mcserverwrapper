@@ -95,8 +95,9 @@ jobs:
       run: |
         touch body.md
     - name: Echo tag
+      shell: bash
       run: |
-        echo ${{ needs.tag.outputs.release-tag }}
+        echo "${{ needs.tag.outputs.release-tag }}"
     - name: Create new release
       uses: ncipollo/release-action@v1
       with:
