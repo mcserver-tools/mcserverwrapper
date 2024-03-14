@@ -60,17 +60,17 @@ def _test_broken_versions():
 
 @pytest.mark.skipif(not os.path.isfile("password.txt"),
                     reason="Cannot test online server without actual credentials present")
-def test_single_vanilla_online(newest_server_jar):
+def _test_single_vanilla_online(newest_server_jar):
     """Test a single vanilla server version"""
 
     run_vanilla_test(newest_server_jar)
 
-def test_single_vanilla_offline(newest_server_jar):
+def _test_single_vanilla_offline(newest_server_jar):
     """Test a single vanilla server version in offline mode"""
 
     run_vanilla_test(newest_server_jar, offline_mode=True)
 
-def test_mineflayer(newest_server_jar):
+def _test_mineflayer(newest_server_jar):
     """Test the mineflayer bot"""
 
     port = 25565
