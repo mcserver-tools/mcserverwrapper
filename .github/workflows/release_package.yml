@@ -65,7 +65,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Read tag from pyproject.toml
       id: read-tag
-      run: >-
+      run: |
         TAG=$(python -c 'import tomli; print(tomli.load(open("pyproject.toml", "rb"))["project"]["version"])')
         echo $TAG
         echo "::set-output name=release-tag::$(echo $TAG)"
@@ -79,7 +79,7 @@ jobs:
         exit 1
       if: steps.check-tag.outputs.exists == 'true' 
     - name: Print tag if it doesn't exist
-      run: \
+      run: |
         echo "Tag ${{ steps.read-tag.outputs.release-tag }} doesn't yet exist and can be created"
       if: steps.check-tag.outputs.exists == 'false' 
 
