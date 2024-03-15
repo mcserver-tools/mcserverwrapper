@@ -23,4 +23,5 @@ disable=too-many-arguments,
         too-few-public-methods,
         global-statement,
         too-many-branches,
-        broad-exception-raised
+        broad-exception-raised,
+        relative-beyond-top-level

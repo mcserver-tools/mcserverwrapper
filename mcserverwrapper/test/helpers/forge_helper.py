@@ -18,11 +18,11 @@ def install_forge(url: str):
     installer_jar = download_file(url)
     testdir = os.path.join(os.getcwd(), "testdir")
 
-    p = subprocess.Popen(["java", "-jar", installer_jar, "--installServer"],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.STDOUT,
-                         cwd=testdir)
-    p.wait()
+    with subprocess.Popen(["java", "-jar", installer_jar, "--installServer"],
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.STDOUT,
+                          cwd=testdir) as p:
+        p.wait()
 
     os.remove(os.path.join(testdir, installer_jar))
     os.remove(os.path.join(testdir, installer_jar + ".log"))
@@ -30,7 +30,7 @@ def install_forge(url: str):
     for file in os.listdir(testdir):
         if re.search(r"^forge-1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?", file) is not None:
             return file
-    
+
     return Exception("Forge jar file not found")
 
 def run_forge_test_url(url, offline_mode=False):
