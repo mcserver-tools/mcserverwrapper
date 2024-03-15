@@ -2,6 +2,10 @@ name: Release tagged package
 
 on: [workflow_dispatch]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   pylint:
     strategy:
@@ -10,6 +14,7 @@ jobs:
     uses: ./.github/workflows/define-pylint.yml
     with:
       python-version: ${{ matrix.python-version }}
+    secrets: inherit
 
   pytest:
     strategy:
@@ -18,12 +23,13 @@ jobs:
     uses: ./.github/workflows/define-pytest.yml
     with:
       python-version: ${{ matrix.python-version }}
+    secrets: inherit
 
   build:
     runs-on: self-hosted
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -38,30 +44,46 @@ jobs:
     - name: Run all tests with pytest
       run: |
         python -m build
+    - name: Persist builds
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-dist-${{ matrix.python-version }}
+        path: dist/*
 
   tag:
     runs-on: self-hosted
     outputs:
       release-tag: ${{ steps.read-tag.outputs.release-tag }}
     steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
     - name: Install dependencies
-      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install tomli
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Read tag from pyproject.toml
       id: read-tag
-      shell: bash
       run: |
         TAG=$(python -c 'import tomli; print(tomli.load(open("pyproject.toml", "rb"))["project"]["version"])')
-        echo "release-tag=$(echo $TAG)"" >> GITHUB_OUTPUT
+        echo $TAG
+        echo "release-tag=$(echo $TAG)" >> $GITHUB_OUTPUT
     - uses: mukunku/tag-exists-action@v1.6.0
       id: check-tag
       with: 
         tag: ${{ steps.read-tag.outputs.release-tag }}
-    - run: echo "Tag exists!"
+    - name: Fail if tag exists
+      run: |
+        echo "Tag ${{ steps.read-tag.outputs.release-tag }} exists!"
+        exit 1
       if: steps.check-tag.outputs.exists == 'true' 
+    - name: Print tag if it doesn't exist
+      run: |
+        echo "Tag ${{ steps.read-tag.outputs.release-tag }} doesn't yet exist and can be created"
+      if: steps.check-tag.outputs.exists == 'false' 
 
   release:
     needs: [pylint, pytest, build, tag]
@@ -70,7 +92,23 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v3
+    - name: Load persisted builds
+      uses: actions/download-artifact@v4
+      with:
+        pattern: build-dist-*
+        path: dist/
+        merge-multiple: true
     - name: Add body.md
-      shell: bash
       run: |
         touch body.md
+    - name: Echo tag
+      run: |
+        echo "${{ needs.tag.outputs.release-tag }}"
+    - name: Create new release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "dist/*"
+        bodyFile: "body.md"
+        tag: "${{ needs.tag.outputs.release-tag }}"
+        commit: "main"
+        token: ${{ secrets.GITHUB_TOKEN }}
