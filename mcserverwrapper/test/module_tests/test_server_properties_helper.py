@@ -4,7 +4,7 @@ import pathlib
 import os
 
 from mcserverwrapper.src.mcversion import McVersion, McVersionType
-from ..src import server_properties_helper as sph
+from ...src import server_properties_helper as sph
 
 def test_get_mixed_params():
     """Tests the helper with mixed params"""
@@ -18,7 +18,7 @@ def test_get_mixed_params():
         "use-native-transport": "false"
     }
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
+    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
     with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write("\n".join([f"{key}={value}" for key, value in props.items()]))
 
@@ -90,7 +90,7 @@ def test_params_with_file():
                       "a-final-prop=aha\n" + \
                       "online-mode=true\n"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
+    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
     with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
@@ -176,7 +176,7 @@ def test_save_existing():
                       "a-final-prop=aha\n" + \
                       "online-mode=false"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
+    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
     with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
@@ -216,7 +216,7 @@ def test_save_new():
     props_test_data = "some-other-prop=haha\n" + \
                       "a-final-prop=aha\n"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
+    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
     with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 

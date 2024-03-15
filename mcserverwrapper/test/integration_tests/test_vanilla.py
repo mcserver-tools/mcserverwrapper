@@ -1,4 +1,4 @@
-"""Module containing tests for the mcserverwrapper"""
+"""Module containing tests for Vanilla servers"""
 
 import os
 from random import randint
@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 import pytest
 
 from mcserverwrapper import Wrapper
-from .helpers import assert_port_is_free, download_file, connect_mineflayer, setup_workspace, \
-                     run_vanilla_test_url, run_vanilla_test
-from .testable_thread import TestableThread
+from ..helpers.common_helper import assert_port_is_free, download_file, connect_mineflayer, setup_workspace
+from ..helpers.vanilla_helper import run_vanilla_test, run_vanilla_test_url
+from ..testable_thread import TestableThread
 
-def test_all_vanilla(jar_version_tuple):
+def test_all(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""
 
     url, name = jar_version_tuple
@@ -60,12 +60,12 @@ def _test_broken_versions():
 
 @pytest.mark.skipif(not os.path.isfile("password.txt"),
                     reason="Cannot test online server without actual credentials present")
-def test_single_vanilla_online(newest_server_jar):
+def test_single_online(newest_server_jar):
     """Test a single vanilla server version"""
 
     run_vanilla_test(newest_server_jar)
 
-def test_single_vanilla_offline(newest_server_jar):
+def test_single_offline(newest_server_jar):
     """Test a single vanilla server version in offline mode"""
 
     run_vanilla_test(newest_server_jar, offline_mode=True)

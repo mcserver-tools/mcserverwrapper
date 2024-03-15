@@ -23,7 +23,7 @@ if not os.path.isdir(test_files_path):
 
 from .fixtures import newest_server_jar
 
-from .helpers import get_vanilla_urls
+from .helpers.common_helper import get_vanilla_urls
 #pylint: enable=wrong-import-position
 
 def pytest_generate_tests(metafunc: Metafunc):
@@ -34,6 +34,7 @@ def pytest_generate_tests(metafunc: Metafunc):
         metafunc.parametrize(argnames="jar_version_tuple",
                              argvalues=urls,
                              ids=[f"test_version_{url[1]}" for url in urls])
+
     if "jar_download_url" in metafunc.fixturenames:
         urls = get_vanilla_urls()
         metafunc.parametrize(argnames="jar_download_url",

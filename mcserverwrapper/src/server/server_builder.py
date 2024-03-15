@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import pathlib
 import os
-import re
-from zipfile import ZipFile
+
+from mcserverwrapper.src.util import logger
 
 from .base_server import BaseServer
 from .vanilla_server import VanillaServer
+from .forge_server import ForgeServer
 from ..mcversion import McVersion, McVersionType
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
@@ -21,6 +21,11 @@ class ServerBuilder:
     """
 
     __create_key = object()
+
+    SERVER_CLASSES: dict[int, type[BaseServer]] = {
+        McVersionType.FORGE: ForgeServer,
+        McVersionType.VANILLA: VanillaServer # !!! VanillaServer has to be the last element !!!
+    }
 
     @classmethod
     def from_jar(cls, jar_file: str) -> ServerBuilder:
@@ -94,9 +99,8 @@ class ServerBuilder:
 
         server_path = pathlib.Path(self._jar_path).parent.resolve()
 
-        server = None
-        if self._mcv.type == McVersionType.VANILLA:
-            server = VanillaServer(server_path, self._mcv, self._port, self._start_cmd)
+        clazz = self.SERVER_CLASSES[self._mcv.type]
+        server = clazz(server_path, self._mcv, self._port, self._start_cmd)
 
         assert server is not None
         return server
@@ -110,46 +114,25 @@ class ServerBuilder:
         self._start_cmd = DEFAULT_START_CMD
         self._port = None
 
-    @staticmethod
-    def _check_jar(jar_file: str) -> McVersion:
+    # pylint: disable=protected-access
+    @classmethod
+    def _check_jar(cls, jar_file: str) -> McVersion:
         mcv = None
 
-        mcv = ServerBuilder._check_jar_fabric(jar_file)
-        if mcv is not None:
-            return mcv
+        for clazz in cls.SERVER_CLASSES.values():
+            mcv = clazz._check_jar(jar_file)
+            if mcv is not None:
+                logger.log(f"Detected Minecraft version: {mcv}")
+                return mcv
 
-        mcv = ServerBuilder._check_jar_vanilla(jar_file)
-        if mcv is not None:
-            return mcv
+        logger.log(f"Minecraft version could not be read from {jar_file.rsplit(os.sep, maxsplit=1)[1]}," + \
+                   " checking filename")
 
-        raise ValueError(f"Minecraft version could not be identified from {jar_file}")
+        for clazz in cls.SERVER_CLASSES.values():
+            mcv = clazz._check_jar_name(jar_file)
+            if mcv is not None:
+                logger.log(f"Detected Minecraft version: {mcv}")
+                return mcv
 
-    @staticmethod
-    def _check_jar_fabric(jar_file: str) -> McVersion | None:
-        if jar_file:
-            pass
-
-    @staticmethod
-    def _check_jar_vanilla(jar_file: str) -> McVersion | None:
-        with ZipFile(jar_file, "r") as zf:
-            # for Minecraft 1.14+
-            version_json = None
-            for zip_fileinfo in zf.filelist:
-                if zip_fileinfo.filename == "version.json":
-                    version_json = json.loads(zf.read(zip_fileinfo))
-            if version_json is not None:
-                return McVersion(version_json["name"], McVersionType.VANILLA)
-
-            # for Mineraft 1.13.2-
-            mcs_class = None
-            for zip_fileinfo in zf.filelist:
-                if zip_fileinfo.filename == "net/minecraft/server/MinecraftServer.class":
-                    mcs_class = zf.read(zip_fileinfo)
-            if mcs_class is not None:
-                vers = [x.group() for x in re.finditer(r"1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?",
-                                                       mcs_class.decode("utf8", errors="ignore"))]
-                if len(vers) != 0:
-                    return McVersion(vers[0], McVersionType.VANILLA)
-
-        # no version was found
-        return None
+        raise ValueError(f"Minecraft version could not be identified from {jar_file.rsplit(os.sep, maxsplit=1)[1]}")
+    # pylint: enable=protected-access

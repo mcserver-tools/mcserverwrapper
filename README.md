@@ -1,8 +1,33 @@
 # McServerWrapper
 
-A wrapper for minecraft servers, usable as a python package or from the console.
+A python package which wraps around a minecraft server, providing easy access for python programs which want to automatically manage minecraft servers.
 
 ## Overview
+
+Examples can be found in the **examples** folder.
+
+Supported Minecraft versions:
+
+### Vanilla
+
+Supports versions 1.7.10 to 1.20.4 (excluding 1.8.0, which is severely bugged).
+
+### Forge
+
+Supports version 1.7.10 to 1.16.5 as well as 1.20.3 to 1.20.4
+
+## Installation
+
+### PyPi
+
+Not yet available
+
+### Github
+
+To install the latest version directly from Github, run the following command:
+```pip install git+https://github.com/mcserver-tools/mcserverwrapper.git```
+
+This will automatically install all other dependencies.
 
 ## Run tests locally
 

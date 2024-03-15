@@ -1,7 +1,7 @@
 """Module containing the PaperServer class"""
 
 from .base_server import BaseServer
-from ..mcversion import McVersionType
+from ..mcversion import McVersion, McVersionType
 
 class PaperServer(BaseServer):
     """
@@ -19,3 +19,15 @@ class PaperServer(BaseServer):
 
         if command == "stop":
             self._stopping()
+
+    @staticmethod
+    def _check_jar(jar_file: str) -> McVersion | None:
+        """Search the given jar file to find the version"""
+
+        raise NotImplementedError()
+
+    @staticmethod
+    def _check_jar_name(jar_file: str) -> McVersion | None:
+        """Search the name of the given jar file to find the version"""
+
+        raise NotImplementedError()
