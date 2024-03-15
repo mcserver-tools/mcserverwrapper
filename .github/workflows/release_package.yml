@@ -68,7 +68,7 @@ jobs:
       run: |
         TAG=$(python -c 'import tomli; print(tomli.load(open("pyproject.toml", "rb"))["project"]["version"])')
         echo $TAG
-        echo "release-tag=$(echo $TAG)\n" >> $GITHUB_OUTPUT
+        echo "release-tag=$(echo $TAG)" >> $GITHUB_OUTPUT
     - uses: mukunku/tag-exists-action@v1.6.0
       id: check-tag
       with: 
