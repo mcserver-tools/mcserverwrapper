@@ -12,6 +12,8 @@ import pathlib
 
 from pytest import Metafunc
 
+from .integration_tests import test_forge
+
 # Adding source path to sys path
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../'))
 sys.path.append(f"{pathlib.Path(__file__).parent.parent}")
@@ -40,3 +42,9 @@ def pytest_generate_tests(metafunc: Metafunc):
         metafunc.parametrize(argnames="jar_download_url",
                              argvalues=[url[0] for url in urls],
                              ids=[f"test_download_version_{url[1]}" for url in urls])
+
+    if "forge_download_url" in metafunc.fixturenames:
+        urls = test_forge.FORGE_URLS
+        metafunc.parametrize(argnames="forge_download_url",
+                             argvalues=test_forge.FORGE_URLS.values(),
+                             ids=[f"test_version_{item}" for item in test_forge.FORGE_URLS])

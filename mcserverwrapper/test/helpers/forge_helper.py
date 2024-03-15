@@ -67,6 +67,7 @@ def run_forge_test(jarfile, offline_mode=False):
 
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
                       server_property_args=server_property_args)
+
     try:
         wrapper.startup()
     except ServerExitedError:

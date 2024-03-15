@@ -1,7 +1,5 @@
 """Module containing tests for Forge servers"""
 
-import pytest
-
 from ..helpers.forge_helper import run_forge_test_url
 
 FORGE_URLS = {
@@ -15,13 +13,10 @@ FORGE_URLS = {
     "1.7.10": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.7.10-10.13.4.1614-1.7.10/forge-1.7.10-10.13.4.1614-1.7.10-installer.jar"
 }
 
-@pytest.mark.parametrize(argnames="url",
-                         argvalues=FORGE_URLS.values(),
-                         ids=[f"test_version_{item}" for item in FORGE_URLS])
-def test_multiple(url: str):
+def test_multiple(forge_download_url: str):
     """Test multiple supported Forge server versions"""
 
-    run_forge_test_url(url)
+    run_forge_test_url(forge_download_url)
 
 def test_single_online():
     """Test a single Forge version in online mode"""
