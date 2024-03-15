@@ -1,5 +1,7 @@
 """Module containing the PaperServer class"""
 
+from __future__ import annotations
+
 from .base_server import BaseServer
 from ..mcversion import McVersion, McVersionType
 

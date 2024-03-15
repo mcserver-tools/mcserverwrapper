@@ -1,5 +1,7 @@
 """Module containing the ForgeServer class"""
 
+from __future__ import annotations
+
 import json
 import os
 import re
