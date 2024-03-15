@@ -66,6 +66,7 @@ jobs:
       shell: bash
       run: |
         TAG=$(python -c 'import tomli; print(tomli.load(open("pyproject.toml", "rb"))["project"]["version"])')
+        echo $TAG
         echo "release-tag=$(echo $TAG)" >> GITHUB_OUTPUT
     - uses: mukunku/tag-exists-action@v1.6.0
       id: check-tag
@@ -73,9 +74,13 @@ jobs:
         tag: ${{ steps.read-tag.outputs.release-tag }}
     - name: Fail if tag exists
       run: |
-        echo "Tag exists!"
+        echo "Tag ${{ steps.read-tag.outputs.release-tag }} exists!"
         exit 1
       if: steps.check-tag.outputs.exists == 'true' 
+    - name: Print tag if it doesn't exist
+      run: \
+        echo "Tag ${{ steps.read-tag.outputs.release-tag }} doesn't yet exist and can be created"
+      if: steps.check-tag.outputs.exists == 'false' 
 
   release:
     needs: [pylint, pytest, build, tag]
@@ -101,8 +106,8 @@ jobs:
     - name: Create new release
       uses: ncipollo/release-action@v1
       with:
-        tag: "${{ needs.tag.outputs.release-tag }}"
-        commit: "main"
         artifacts: "dist/*"
         bodyFile: "body.md"
+        tag: "${{ needs.tag.outputs.release-tag }}"
+        commit: "main"
         token: ${{ secrets.GITHUB_TOKEN }}
