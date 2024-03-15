@@ -65,10 +65,10 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Read tag from pyproject.toml
       id: read-tag
-      run: |
+      run: >-
         TAG=$(python -c 'import tomli; print(tomli.load(open("pyproject.toml", "rb"))["project"]["version"])')
         echo $TAG
-        echo "release-tag=$(echo $TAG)\n" >> GITHUB_OUTPUT
+        echo "::set-output name=release-tag::$(echo $TAG)"
     - uses: mukunku/tag-exists-action@v1.6.0
       id: check-tag
       with: 
