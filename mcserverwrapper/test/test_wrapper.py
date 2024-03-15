@@ -80,7 +80,7 @@ def test_mineflayer(newest_server_jar):
     assert os.path.isfile("password.txt")
     assert os.access("password.txt", os.R_OK)
     with open("password.txt", "r", encoding="utf8") as f:
-        assert f.read() != ""
+        assert f.read().replace(" ", "").replace("\n", "") != "", "password.txt is empty"
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar} nogui"
 
