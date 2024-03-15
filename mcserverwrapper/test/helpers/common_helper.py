@@ -1,4 +1,4 @@
-"""Helper functions used during testing"""
+"""Common helper functions used during testing"""
 
 from datetime import datetime, timedelta
 import errno
@@ -7,7 +7,6 @@ import os
 import shutil
 from threading import Thread
 from time import sleep
-from random import randint
 
 import re
 import pytest
@@ -15,8 +14,6 @@ from bs4 import BeautifulSoup
 import requests
 
 from javascript import require, once
-
-from mcserverwrapper import Wrapper
 
 mineflayer = require('mineflayer')
 
@@ -66,69 +63,6 @@ def assert_port_is_free(port: int = 25565, strict=True) -> bool:
                 raise e
         return True
 
-def run_vanilla_test_url(url, offline_mode=False, version_name=None):
-    """Run all tests for a single vanilla minecraft server url"""
-
-    setup_workspace()
-
-    jarfile = download_file(url)
-
-    run_vanilla_test(jarfile, offline_mode, version_name)
-
-def run_vanilla_test(jarfile, offline_mode=False, version_name=None):
-    """Run all tests for a single vanilla minecraft server jar"""
-
-    port = 25565
-    while not assert_port_is_free(port, False):
-        port = randint(25500, 25600)
-
-    if not offline_mode:
-        assert os.path.isfile("password.txt")
-        assert os.access("password.txt", os.R_OK)
-        with open("password.txt", "r", encoding="utf8") as f:
-            assert f.read().replace(" ", "").replace("\n", "") != "", "password.txt is empty"
-
-    start_cmd = f"java -Xmx2G -jar {jarfile} nogui"
-
-    server_property_args = {
-        "port": port,
-        "levt": "flat",
-        "untp": "false"
-    }
-    if offline_mode:
-        server_property_args["onli"] = "false"
-
-    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
-                      server_property_args=server_property_args)
-    wrapper.startup()
-    assert wrapper.server_running()
-
-    while not wrapper.output_queue.empty():
-        wrapper.output_queue.get()
-
-    wrapper.send_command("/say Hello World")
-
-    line = ""
-    while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=10)
-
-    # MineFlayer doesn't (yet) support 1.7.10
-    # https://github.com/PrismarineJS/mineflayer/issues/432
-    # the other versions fail because of missing protocol data
-    if version_name not in ["1.14.2", "1.9.2", "1.9.1", "1.7.10"]:
-        bot = connect_mineflayer(port=port, offline_mode=offline_mode)
-        assert bot is not None
-
-        line = ""
-        while "I spawned" not in line:
-            line = wrapper.output_queue.get(timeout=5)
-
-    wrapper.stop()
-
-    assert not wrapper.server_running()
-    # assert that the server process really stopped
-    assert wrapper.server.get_child_status(0.1) is not None
-
 def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     """Connect a fake player to the server"""
 
@@ -172,7 +106,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 def download_file(url, counter=""):
     """Download the file from the given url and return its path"""
 
-    filename_split = url.rsplit('/', maxsplit=1)[1].split(".")
+    filename_split = url.rsplit('/', maxsplit=1)[1].rsplit(".", maxsplit=1)
     local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
     req = requests.get(url, timeout=5)
     with open(os.path.join("testdir", local_filename), 'wb') as file:

@@ -9,7 +9,6 @@ from threading import Thread
 from time import sleep
 
 from .util import logger
-
 from .server import ServerBuilder
 from .mcversion import McVersion
 from ..src import server_properties_helper
@@ -41,7 +40,7 @@ class Wrapper():
         atexit.register(self.stop)
 
         self.output_queue = Queue()
-        Thread(target=self._t_output_handler, args=[print_output,]).start()
+        self._output_thread = Thread(target=self._t_output_handler, args=[print_output,])
 
     def startup(self, blocking=True) -> None:
         """Starts the minecraft server"""
@@ -56,6 +55,7 @@ class Wrapper():
         # always accept eula to recover from a previous crash
         self._accept_eula()
 
+        self._output_thread.start()
         self.server.start(blocking=blocking)
 
     def send_command(self, command, wait_time=0) -> None:

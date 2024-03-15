@@ -6,7 +6,7 @@ import os
 import pytest
 import requests
 
-from . import helpers
+from .helpers import common_helper
 
 @pytest.fixture
 def newest_server_jar():
@@ -22,7 +22,7 @@ def newest_server_jar():
         with open(filename, 'wb') as file:
             file.write(req.content)
 
-    helpers.setup_workspace()
+    common_helper.setup_workspace()
 
     testdir_filename = os.path.join("testdir", "server.jar")
     shutil.copyfile(filename, testdir_filename)

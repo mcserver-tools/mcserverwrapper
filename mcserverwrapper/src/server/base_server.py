@@ -16,6 +16,7 @@ from pexpect import popen_spawn
 
 from ..mcversion import McVersion
 from ..util import info_getter, logger
+from ..error import ServerExitedError
 
 class BaseServer:
     """The base server, containing server type-independent functionality"""
@@ -37,8 +38,13 @@ class BaseServer:
 
         # wait for files to get generated or server to exit
         while (not os.path.isfile(os.path.join(self.server_path, "./server.properties")) \
-               or not os.path.isfile(os.path.join(self.server_path, "eula.txt"))):
+               or not os.path.isfile(os.path.join(self.server_path, "eula.txt"))
+              and self.get_child_status(0.1) is None):
             sleep(0.1)
+
+        # check if server crashed
+        if self.get_child_status(0.1) not in [None, 0]:
+            raise ServerExitedError(f"Server unexpectedly exited with exit code {self.get_child_status(0.1)}")
 
         # if blocking is True, wait for the server to finish starting
         if blocking:
@@ -62,6 +68,7 @@ class BaseServer:
     def execute_command(self, command: str) -> None:
         """Send a given command to the server"""
 
+        logger.log(f"Sending command: {command}")
         self._child.sendline(command)
 
     def get_child_status(self, timeout: int) -> int | None:
@@ -167,24 +174,35 @@ class BaseServer:
 
         return text_str
 
-    # pylint: disable=attribute-defined-outside-init
-    def _parse_and_save_version_string(self, version_raw):
-        """Search the given version string to find out the version type"""
+    # pylint: disable=attribute-defined-outside-init, unreachable, protected-access, undefined-variable
+    @staticmethod
+    def _check_jar(jar_file: str) -> McVersion | None:
+        """Search the given jar file to find the version"""
 
-        self.version = version_raw
+        raise NotImplementedError()
 
-        if re.search(r"^1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
+        filename = jar_file.rsplit(".", maxsplit=1)[0]
+        version_type = None
+        version = None
+
+        if re.search(r"^1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", filename) is not None:
             self._version_type = "vanilla"
-        elif re.search(r"^[1-2][0-9]w[0-9]{1,2}[a-z]", version_raw) is not None:
+        elif re.search(r"^[1-2][0-9]w[0-9]{1,2}[a-z]", filename) is not None:
             self._version_type = "snapshot"
-        elif re.search(r"^Paper 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
+        elif re.search(r"^Paper 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", filename) is not None:
             self._version_type = "paper"
-        elif re.search(r"^PaperSpigot 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
+        elif re.search(r"^PaperSpigot 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", filename) is not None:
             self._version_type = "paper"
-        elif re.search(r"^Spigot 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
+        elif re.search(r"^Spigot 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", filename) is not None:
             self._version_type = "spigot"
-        elif re.search(r"^CraftBukkit 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", version_raw) is not None:
+        elif re.search(r"^CraftBukkit 1\.[1-2]{0,1}[0-9](\.[0-9]{1,2})?$", filename) is not None:
             self._version_type = "bukkit"
         else:
             self._version_type = "unknown"
-    # pylint: enable=attribute-defined-outside-init
+    # pylint: enable=attribute-defined-outside-init, unreachable, protected-access, undefined-variable
+
+    @staticmethod
+    def _check_jar_name(jar_file: str) -> McVersion | None:
+        """Search the name of the given jar file to find the version"""
+
+        raise NotImplementedError()
