@@ -16,6 +16,8 @@ from requests.adapters import HTTPAdapter, Retry
 
 from javascript import require, once
 
+from mcserverwrapper.src.util import logger
+
 mineflayer = require('mineflayer')
 
 def setup_workspace():
@@ -121,6 +123,19 @@ def download_file(url, counter=""):
         with open(os.path.join("testdir", local_filename), 'wb') as file:
             file.write(req.content)
     return local_filename
+
+def get_mcserver_log() -> str:
+    """Return the current mcserverwrapper.log as a string if it exists"""
+
+    if logger.logfile_path is None:
+        print("Logger was not yet setup, cannot print logfile")
+        return ""
+
+    data = f"Printing out {logger.LOGFILE_NAME}:\n"
+    with open(logger.logfile_path, "r", encoding="utf8") as f:
+        for line in f.readlines():
+            data += line
+    return data
 
 def get_vanilla_urls():
     """Function written by @Pfefan"""
