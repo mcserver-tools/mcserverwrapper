@@ -12,6 +12,7 @@ import re
 import pytest
 from bs4 import BeautifulSoup
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from javascript import require, once
 
@@ -104,13 +105,21 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     return bot
 
 def download_file(url, counter=""):
-    """Download the file from the given url and return its path"""
+    """
+    Download the file from the given url and return its path
+    
+    Retry code from https://stackoverflow.com/a/35504626/15436169
+    """
 
     filename_split = url.rsplit('/', maxsplit=1)[1].rsplit(".", maxsplit=1)
     local_filename = f"{filename_split[0]}{counter}.{filename_split[1]}"
-    req = requests.get(url, timeout=5)
-    with open(os.path.join("testdir", local_filename), 'wb') as file:
-        file.write(req.content)
+    with requests.Session() as s:
+        retries = Retry(total=10,
+                        backoff_factor=0.1)
+        s.mount("https://", HTTPAdapter(max_retries=retries))
+        req = s.get(url, timeout=30)
+        with open(os.path.join("testdir", local_filename), 'wb') as file:
+            file.write(req.content)
     return local_filename
 
 def get_vanilla_urls():

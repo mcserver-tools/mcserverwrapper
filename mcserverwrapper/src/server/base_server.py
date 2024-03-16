@@ -53,6 +53,10 @@ class BaseServer:
     def stop(self):
         """Stop the running server gracefully, and kills it if it doesn't stop within 20 seconds"""
 
+        # server hasn't yet started, so it doesn't need to be stopped
+        if self._child is None:
+            return
+
         if self.get_child_status(1) is None:
             self.execute_command("/stop")
 
