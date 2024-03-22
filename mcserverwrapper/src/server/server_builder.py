@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import pathlib
 import os
+from pathlib import Path
 
 from mcserverwrapper.src.util import logger
 
@@ -97,7 +97,7 @@ class ServerBuilder:
             BaseServer: The new server instance which is a superclass of BaseServer
         """
 
-        server_path = pathlib.Path(self._jar_path).parent.resolve()
+        server_path = Path(self._jar_path).parent.resolve()
 
         clazz = self.SERVER_CLASSES[self._mcv.type]
         server = clazz(server_path, self._mcv, self._port, self._start_cmd)
@@ -111,7 +111,7 @@ class ServerBuilder:
 
         self._jar_path = jar_path
         self._mcv = mcv
-        self._start_cmd = DEFAULT_START_CMD
+        self._start_cmd = DEFAULT_START_CMD.replace("server.jar", Path(jar_path).name)
         self._port = None
 
     # pylint: disable=protected-access

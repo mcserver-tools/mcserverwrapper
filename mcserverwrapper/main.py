@@ -3,7 +3,7 @@
 import pathlib
 import os
 
-from mcserverwrapper.src.wrapper import Wrapper
+from mcserverwrapper import Wrapper
 
 # pylint: disable=C0103
 

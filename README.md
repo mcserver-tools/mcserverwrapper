@@ -25,7 +25,9 @@ Not yet available
 ### Github
 
 To install the latest version directly from Github, run the following command:
-```pip install git+https://github.com/mcserver-tools/mcserverwrapper.git```
+```bash
+pip install git+https://github.com/mcserver-tools/mcserverwrapper.git
+```
 
 This will automatically install all other dependencies.
 
