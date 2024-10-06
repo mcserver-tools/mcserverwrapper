@@ -1,6 +1,6 @@
 name: Run Pylint
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   pylint:

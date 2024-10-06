@@ -137,6 +137,7 @@ def save_properties(server_path: str, server_property_args: dict[str, Any]) -> N
             missing_props.remove("levt")
         if "use-native-transport=" in line:
             lines[index] = f"use-native-transport={server_property_args['untp']}\n"
+            missing_props.remove("untp")
 
     # add missing properties
     if "port" in missing_props:
