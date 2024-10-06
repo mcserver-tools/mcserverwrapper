@@ -24,7 +24,7 @@ class ForgeServer(BaseServer):
         super().execute_command(command)
 
         if command == "/stop":
-            self._stopping()
+            self._ensure_stop()
 
     @classmethod
     def _check_jar(cls, jar_file: str) -> McVersion | None:

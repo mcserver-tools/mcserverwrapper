@@ -20,7 +20,7 @@ class PaperServer(BaseServer):
         super().execute_command(command)
 
         if command == "stop":
-            self._stopping()
+            self._ensure_stop()
 
     @staticmethod
     def _check_jar(jar_file: str) -> McVersion | None:
