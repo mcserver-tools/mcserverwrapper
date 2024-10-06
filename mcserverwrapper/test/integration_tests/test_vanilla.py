@@ -18,7 +18,7 @@ def test_all(jar_version_tuple):
     url, name = jar_version_tuple
 
     try:
-        thread = TestableThread(target=run_vanilla_test_url, args=[url, True, name], daemon=True)
+        thread = TestableThread(target=run_vanilla_test_url, args=[url, True], daemon=True)
         thread.start()
 
         terminate_time = datetime.now() + timedelta(minutes=5)
