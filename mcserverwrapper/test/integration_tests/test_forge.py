@@ -18,14 +18,14 @@ def _test_multiple(forge_download_url: str):
 
     run_forge_test_url(forge_download_url)
 
-def _test_single_online():
+def test_single_online():
     """Test a single Forge version in online mode"""
 
     url = "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.4-49.0.31/forge-1.20.4-49.0.31-installer.jar"
 
     run_forge_test_url(url)
 
-def _test_single_offline():
+def test_single_offline():
     """Test a single Forge version in offline mode"""
 
     url = "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.4-49.0.31/forge-1.20.4-49.0.31-installer.jar"
