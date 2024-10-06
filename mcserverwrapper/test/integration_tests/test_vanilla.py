@@ -111,6 +111,7 @@ def test_mineflayer(newest_server_jar):
     while "I spawned" not in line:
         line = wrapper.output_queue.get(timeout=5)
 
+    wrapper.send_command("/kick Developer", wait_time=1)
     wrapper.server.kill()
 
     # assert that the server process really stopped

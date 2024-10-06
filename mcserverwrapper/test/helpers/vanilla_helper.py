@@ -74,6 +74,7 @@ def run_vanilla_test(jarfile, offline_mode=False):
         while "I spawned" not in line:
             line = wrapper.output_queue.get(timeout=5)
 
+    wrapper.send_command("/kick Developer", wait_time=1)
     wrapper.server.kill()
 
     assert not wrapper.server_running()
