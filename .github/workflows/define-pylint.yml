@@ -18,7 +18,7 @@ jobs:
       - self-hosted
     strategy:
       matrix:
-        os: [Linux, Windows]
+        os: [Linux]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ inputs.python-version }}
