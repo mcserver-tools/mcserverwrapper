@@ -74,7 +74,7 @@ def run_vanilla_test(jarfile, offline_mode=False):
         while "I spawned" not in line:
             line = wrapper.output_queue.get(timeout=5)
 
-    wrapper.stop()
+    wrapper.server.kill()
 
     assert not wrapper.server_running()
     # assert that the server process really stopped

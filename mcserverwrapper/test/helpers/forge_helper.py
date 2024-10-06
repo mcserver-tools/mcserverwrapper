@@ -85,7 +85,7 @@ def run_forge_test(jarfile, offline_mode=False):
     while "Hello World" not in line:
         line = wrapper.output_queue.get(timeout=10)
 
-    wrapper.stop()
+    wrapper.server.kill()
 
     assert not wrapper.server_running()
     # assert that the server process really stopped
