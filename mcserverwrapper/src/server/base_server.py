@@ -67,8 +67,9 @@ class BaseServer:
         if sys.platform == "win32":
             os.system(f"taskkill /pid {self._child.pid} /f")
         else:
+            # pylint: disable-next=no-member
             self._child.kill(signal.SIGKILL)
-        
+
         if self.get_child_status(30) is None:
             logger.log("Server did not stop")
             logger.log("We're running out of options, maybe try manually killing the server?")
