@@ -1,20 +1,24 @@
 # McServerWrapper
 
-A python package which wraps around a minecraft server, providing easy access for python programs which want to automatically manage minecraft servers.
+A python package which wraps around a minecraft server, providing easy access for other programs which want to programmatically manage minecraft servers.
 
 ## Overview
 
-Examples can be found in the **examples** folder.
+### Supported Minecraft versions
 
-Supported Minecraft versions:
+#### Vanilla
 
-### Vanilla
+Supports versions 1.7.10 to 1.20.4 (excluding 1.8.0, which is severely bugged, 1.8.1+ is fine)
 
-Supports versions 1.7.10 to 1.20.4 (excluding 1.8.0, which is severely bugged).
+#### Forge
 
-### Forge
+Supports versions 1.7.10 to 1.16.5 as well as 1.20.3 to 1.20.4
 
-Supports version 1.7.10 to 1.16.5 as well as 1.20.3 to 1.20.4
+### Supported operating systems
+
+Tested to work on Windows 10 and Ubuntu.
+
+Different Linux distros and Windows 11 might work as well. If not, please open a new issue.
 
 ## Installation
 
@@ -30,6 +34,24 @@ pip install git+https://github.com/mcserver-tools/mcserverwrapper.git
 ```
 
 This will automatically install all other dependencies.
+
+## Usage
+
+A simple usage example is shown below:
+```python
+from mcserverwrapper import Wrapper
+
+wrapper = Wrapper("/my/server/directory/server.jar")
+wrapper.startup()
+wrapper.send_command("/say hello minecraft")
+wrapper.stop()
+```
+
+In this example, a minecraft server is started by providing the path to its server.jar file.
+After startup, it sends a command to the server.
+Finally, the server is stopped gracefully.
+
+More examples can be found in the **examples** folder.
 
 ## Run tests locally
 
