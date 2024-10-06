@@ -13,7 +13,7 @@ FORGE_URLS = {
     "1.7.10": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.7.10-10.13.4.1614-1.7.10/forge-1.7.10-10.13.4.1614-1.7.10-installer.jar"
 }
 
-def _test_multiple(forge_download_url: str):
+def test_multiple(forge_download_url: str):
     """Test multiple supported Forge server versions"""
 
     run_forge_test_url(forge_download_url)
