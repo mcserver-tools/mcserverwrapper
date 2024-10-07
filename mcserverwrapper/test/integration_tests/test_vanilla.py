@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from mcserverwrapper import Wrapper
+from mcserverwrapper.src import error
 from ..helpers.common_helper import assert_port_is_free, download_file, connect_mineflayer, setup_workspace
 from ..helpers.vanilla_helper import run_vanilla_test, run_vanilla_test_url
 from ..testable_thread import TestableThread
@@ -111,12 +112,13 @@ def test_mineflayer(newest_server_jar):
     while "I spawned" not in line:
         line = wrapper.output_queue.get(timeout=5)
 
-    wrapper.stop()
+    wrapper.send_command("/kick Developer", wait_time=1)
+    wrapper.server.kill()
 
     # assert that the server process really stopped
     assert wrapper.server.get_child_status(0.1) is not None
 
-def _test_invalid_start_params(newest_server_jar):
+def test_invalid_start_params(newest_server_jar):
     """Test a server with an invalid startup command"""
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"
@@ -124,5 +126,6 @@ def _test_invalid_start_params(newest_server_jar):
     wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
                       server_start_command=start_cmd,
                       print_output=False)
-    with pytest.raises(KeyboardInterrupt):
+
+    with pytest.raises(error.ServerExitedError):
         wrapper.startup()

@@ -51,7 +51,7 @@ class BaseServer:
             self._wait_for_startup()
 
     def stop(self):
-        """Stop the running server gracefully, and kills it if it doesn't stop within 20 seconds"""
+        """Stop the running server gracefully"""
 
         # server hasn't yet started, so it doesn't need to be stopped
         if self._child is None:
@@ -61,13 +61,18 @@ class BaseServer:
             self.execute_command("/stop")
 
     def kill(self):
-        """Kill the server process, but DATA MAY BE LOST"""
+        """Kill the server process, but UNSAVED DATA WILL BE LOST AND SAVES POSSIBLY CORRUPTED"""
 
         logger.log("Killing server process")
         if sys.platform == "win32":
-            self._child.kill(signal.CTRL_C_EVENT)
+            os.system(f"taskkill /pid {self._child.pid} /f")
         else:
-            self._child.kill(signal.SIGTERM)
+            # pylint: disable-next=no-member
+            self._child.kill(signal.SIGKILL)
+
+        if self.get_child_status(30) is None:
+            logger.log("Server did not stop")
+            logger.log("We're running out of options, maybe try manually killing the server?")
 
     def execute_command(self, command: str) -> None:
         """Send a given command to the server"""
@@ -150,12 +155,19 @@ class BaseServer:
             response = info_getter.ping_address_with_return("127.0.0.1", self._port)
             sleep(1)
 
-    def _stopping(self):
+    def _ensure_stop(self):
         logger.log("Stopping server")
-        status = self.get_child_status(20)
+        status = self.get_child_status(30)
         if status is None:
-            logger.log("Server did not stop within 20 seconds")
-            self.kill()
+            logger.log("Server did not stop within 30 seconds")
+            if sys.platform == "win32":
+                self._child.kill(signal.CTRL_C_EVENT)
+            else:
+                self._child.kill(signal.SIGTERM)
+
+            status = self.get_child_status(60)
+            if status is None:
+                logger.log("Server did not stop within 90 seconds")
 
     def _format_output(self, raw_text: bytes) -> str:
         # remove line breaks
