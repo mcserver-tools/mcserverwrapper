@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from mcstatus import JavaServer
-from mcstatus.pinger import PingResponse
+from mcstatus.responses import JavaStatusResponse
 
-def ping_address_with_return(address, port, timeout=3) -> PingResponse | None:
+def ping_address_with_return(address, port, timeout=3) -> JavaStatusResponse | None:
     """Pings a given address/port combination and returns the result or None"""
 
     if isinstance(port, str):

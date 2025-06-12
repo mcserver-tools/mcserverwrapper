@@ -8,11 +8,15 @@ A python package which wraps around a minecraft server, providing easy access fo
 
 #### Vanilla
 
-Supports versions 1.7.10 to 1.20.4 (excluding 1.8.0, which is severely bugged, 1.8.1+ is fine)
+Supports versions 1.7.10 to 1.20.4 (excluding 1.8.0, which is severely bugged, 1.8.1+ is fine again)
 
 #### Forge
 
 Supports versions 1.7.10 to 1.16.5 as well as 1.20.3 to 1.20.4
+
+### Supported Python versions
+
+Tested to work with Python versions 3.8 to 3.13.
 
 ### Supported operating systems
 

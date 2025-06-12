@@ -158,7 +158,7 @@ def get_vanilla_urls():
                 soup = BeautifulSoup(page.content, 'html.parser')
                 for server_jar_link in soup.find_all('a',{'class':'text-xs whitespace-nowrap py-3 px-8 ' + \
                                             'bg-green-700 hover:bg-green-900 rounded text-white ' + \
-                                            'no-underline font-bold transition-colors duration-200'}):
+                                            'no-underline font-bold transition-colors duration-200 downloadJar'}):
                     links.append((server_jar_link.get('href'), version_name))
     return links
 

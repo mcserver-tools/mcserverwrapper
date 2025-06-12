@@ -66,7 +66,11 @@ def run_vanilla_test(jarfile, offline_mode=False):
                             "1.20.5",
                             "1.20.6",
                             "1.21",
-                            "1.21.1"]:
+                            "1.21.1",
+                            "1.21.2",
+                            "1.21.3",
+                            "1.21.4",
+                            "1.21.5"]:
         bot = connect_mineflayer(port=port, offline_mode=offline_mode)
         assert bot is not None
 
