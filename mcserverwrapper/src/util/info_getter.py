@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+import sys
+
 from mcstatus import JavaServer
-from mcstatus.responses import JavaStatusResponse
+
+# python versions above 3.9
+if sys.version_info.minor > 9:
+    from mcstatus.responses import JavaStatusResponse
+else:
+    from mcstatus.status_response import JavaStatusResponse
 
 def ping_address_with_return(address, port, timeout=3) -> JavaStatusResponse | None:
     """Pings a given address/port combination and returns the result or None"""
