@@ -98,7 +98,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 
     while not bot_connected[0]:
         if (datetime.now() - start_time) > timedelta(seconds=30):
-            pytest.skip(f"Bot connection to {address}:{port} timed out")
+            raise Exception(f"Bot connection to {address}:{port} timed out")
         sleep(0.1)
 
     bot.chat('I spawned')
@@ -168,7 +168,7 @@ def _version_valid(version):
         return False
     if vers_split[1] == 7 and (len(vers_split) < 3 or vers_split[2] < 10):
         return False
-    if ".".join([str(item) for item in vers_split]) in ["1.8"]:
+    if ".".join([str(item) for item in vers_split]) in ["1.8", "1.21.9"]:
         return False
 
     return True

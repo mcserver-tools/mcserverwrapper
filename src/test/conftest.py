@@ -13,7 +13,6 @@ sys.path.append(f"{pathlib.Path(__file__).parent}")
 # pylint: enable=wrong-import-position
 
 import pytest
-from pytest import Metafunc, TestReport, Session, ExitCode
 
 from test.helpers.common_helper import get_mcserver_log, get_vanilla_urls
 from test.integration_tests import test_forge
@@ -23,19 +22,27 @@ os.environ["DEBUG"] = "True"
 if not os.path.isdir("temp"):
     os.mkdir("temp")
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--skip-linting", action="store_true", default=False, help="skip the pylint test"
     )
+    parser.addoption(
+        "--test-all", action="store_true", default=False, help="test all supported minecraft versions"
+    )
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     if config.getoption("--skip-linting"):
         skip_pylint = pytest.mark.skip(reason="skipping code linting due to --skip-linting arg")
         for item in items:
             if item.name in ["test_pylint", "test_mypy"]:
                 item.add_marker(skip_pylint)
+    if not config.getoption("--test-all"):
+        skip_pylint = pytest.mark.skip(reason="skipping testing all minecraft versions due to mising --test-all arg")
+        for item in items:
+            if item.name.startswith("test_all[") or item.name.endswith("test_multiple["):
+                item.add_marker(skip_pylint)
 
-def pytest_generate_tests(metafunc: Metafunc):
+def pytest_generate_tests(metafunc: pytest.Metafunc):
     """Pytest hook"""
 
     if "jar_version_tuple" in metafunc.fixturenames:
@@ -63,7 +70,7 @@ def pytest_runtest_makereport(item, call):
     """Save mcserverwrapper.log to the current pytest item"""
 
     # execute all other hooks to obtain the report object
-    rep: TestReport = yield
+    rep: pytest.TestReport = yield
 
     # we only look at actual failing test calls, not setup/teardown
     if rep.when == "call" and rep.outcome == "failed":
@@ -72,7 +79,7 @@ def pytest_runtest_makereport(item, call):
     return rep
 
 @pytest.hookimpl(trylast=True)
-def pytest_sessionfinish(session: Session, exitstatus: ExitCode):
+def pytest_sessionfinish(session: pytest.Session, exitstatus: pytest.ExitCode):
     """Print all saved mcserverwrapper.log after all tests finished"""
 
     if len(session.items) == 0:

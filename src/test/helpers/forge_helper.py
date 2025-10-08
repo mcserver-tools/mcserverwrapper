@@ -76,20 +76,23 @@ def run_forge_test(jarfile, offline_mode=False):
         # server exited because of invalid java verison
         pytest.skip("Server exited likely due to wrong java version")
 
-    assert wrapper.server_running()
+    try:
+        assert wrapper.server_running()
 
-    while not wrapper.output_queue.empty():
-        wrapper.output_queue.get()
+        while not wrapper.output_queue.empty():
+            wrapper.output_queue.get()
 
-    wrapper.send_command("/say Hello World")
+        wrapper.send_command("/say Hello World")
 
-    line = ""
-    while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=10)
+        line = ""
+        while "Hello World" not in line:
+            line = wrapper.output_queue.get(timeout=10)
 
-    wrapper.send_command("/kick Developer", wait_time=1)
-    wrapper.server.kill()
+        wrapper.server.stop()
 
-    assert not wrapper.server_running()
-    # assert that the server process really stopped
-    assert wrapper.server.get_child_status(0.1) is not None
+        assert not wrapper.server_running()
+        # assert that the server process really stopped
+        assert wrapper.server.get_child_status(0.1) is not None
+    except BaseException:
+        wrapper.server.kill()
+        raise

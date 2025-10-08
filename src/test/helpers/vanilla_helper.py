@@ -45,45 +45,51 @@ def run_vanilla_test(jarfile, offline_mode=False):
                       print_output=False,
                       server_property_args=server_property_args)
     wrapper.startup()
-    assert wrapper.server_running()
 
-    while not wrapper.output_queue.empty():
-        wrapper.output_queue.get()
+    try:
+        assert wrapper.server_running()
 
-    wrapper.send_command("/say Hello World")
+        while not wrapper.output_queue.empty():
+            wrapper.output_queue.get()
 
-    line = ""
-    while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=10)
-
-    # Mineflayer doesn't yet support 1.20.5+
-    # https://github.com/PrismarineJS/mineflayer/issues/3405
-    # https://github.com/PrismarineJS/mineflayer/issues/3406
-    # MineFlayer doesn't (yet) support 1.7.10
-    # https://github.com/PrismarineJS/mineflayer/issues/432
-    # the other versions fail because of missing protocol data
-    if wrapper.get_version().name not in ["1.7.10",
-                            "1.9.1",
-                            "1.9.2",
-                            "1.14.2",
-                            "1.20.5",
-                            "1.20.6",
-                            "1.21",
-                            "1.21.1",
-                            "1.21.2",
-                            "1.21.3",
-                            "1.21.4",
-                            "1.21.5"]:
-        bot = connect_mineflayer(port=port, offline_mode=offline_mode)
-        assert bot is not None
+        wrapper.send_command("/say Hello World")
 
         line = ""
-        while "I spawned" not in line:
-            line = wrapper.output_queue.get(timeout=5)
+        while "Hello World" not in line:
+            line = wrapper.output_queue.get(timeout=10)
 
-    wrapper.send_command("/kick Developer", wait_time=1)
-    wrapper.server.kill()
+        # Mineflayer doesn't yet support 1.20.5+
+        # https://github.com/PrismarineJS/mineflayer/issues/3405
+        # https://github.com/PrismarineJS/mineflayer/issues/3406
+        # MineFlayer doesn't (yet) support 1.7.10
+        # https://github.com/PrismarineJS/mineflayer/issues/432
+        # the other versions fail because of missing protocol data
+        if wrapper.get_version().name not in ["1.7.10",
+                                "1.9.1",
+                                "1.9.2",
+                                "1.14.2",
+                                "1.20.5",
+                                "1.20.6",
+                                "1.21",
+                                "1.21.1",
+                                "1.21.2",
+                                "1.21.3",
+                                "1.21.4",
+                                "1.21.5"]:
+            bot = connect_mineflayer(port=port, offline_mode=offline_mode)
+            assert bot is not None
 
-    assert not wrapper.server_running()
-    # assert that the server process really stopped
-    assert wrapper.server.get_child_status(0.1) is not None
+            line = ""
+            while "I spawned" not in line:
+                line = wrapper.output_queue.get(timeout=5)
+
+        wrapper.send_command("/kick Developer", wait_time=1)
+
+        wrapper.server.stop()
+
+        assert not wrapper.server_running()
+        # assert that the server process really stopped
+        assert wrapper.server.get_child_status(0.1) is not None
+    except BaseException:
+        wrapper.server.kill()
+        raise

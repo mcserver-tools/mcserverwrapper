@@ -6,6 +6,10 @@ on:
       python-version:
         required: true
         type: string
+      pytest-args:
+        required: false
+        type: string
+        default: ""
 
 defaults:
   run:
@@ -51,4 +55,4 @@ jobs:
         echo $PASSWORD >> password.txt
     - name: Run tests with pytest
       run: |
-        pytest src -rs --skip-linting
+        pytest src -rs --skip-linting ${{ inputs.pytest-args }}

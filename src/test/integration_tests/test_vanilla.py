@@ -96,28 +96,34 @@ def test_mineflayer(newest_server_jar):
                       server_property_args=server_params,
                       print_output=False)
     wrapper.startup()
-    assert wrapper.server_running()
-    while not wrapper.output_queue.empty():
-        wrapper.output_queue.get()
 
-    wrapper.send_command("/say Hello World")
+    try:
+        assert wrapper.server_running()
+        while not wrapper.output_queue.empty():
+            wrapper.output_queue.get()
 
-    line = ""
-    while "Hello World" not in line:
-        line = wrapper.output_queue.get(timeout=5)
+        wrapper.send_command("/say Hello World")
 
-    bot = connect_mineflayer(port=port)
-    assert bot is not None
+        line = ""
+        while "Hello World" not in line:
+            line = wrapper.output_queue.get(timeout=5)
 
-    line = ""
-    while "I spawned" not in line:
-        line = wrapper.output_queue.get(timeout=5)
+        bot = connect_mineflayer(port=port)
+        assert bot is not None
 
-    wrapper.send_command("/kick Developer", wait_time=1)
-    wrapper.server.kill()
+        line = ""
+        while "I spawned" not in line:
+            line = wrapper.output_queue.get(timeout=5)
 
-    # assert that the server process really stopped
-    assert wrapper.server.get_child_status(0.1) is not None
+        wrapper.send_command("/kick Developer", wait_time=1)
+
+        wrapper.server.stop()
+
+        # assert that the server process really stopped
+        assert wrapper.server.get_child_status(0.1) is not None
+    except BaseException:
+        wrapper.server.kill()
+        raise
 
 def test_invalid_start_params(newest_server_jar):
     """Test a server with an invalid startup command"""
