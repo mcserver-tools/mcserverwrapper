@@ -11,6 +11,7 @@ from test.testable_thread import TestableThread
 from time import sleep
 
 import pytest
+from urllib3.exceptions import ReadTimeoutError
 
 from mcserverwrapper import Wrapper, error
 
@@ -32,6 +33,8 @@ def test_all(jar_version_tuple):
             raise TimeoutError("Test timed out")
 
         thread.join()
+    except ReadTimeoutError:
+        pytest.skip(f"Testing version {name} skipped: server jar download timed out")
     except TimeoutError as timeout_err:
         if "Test timed out" in timeout_err.args:
             pytest.fail(f"Testing version {name} timed out")

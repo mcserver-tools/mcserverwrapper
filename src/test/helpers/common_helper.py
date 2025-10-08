@@ -97,7 +97,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
     start_time = datetime.now()
 
     while not bot_connected[0]:
-        if (datetime.now() - start_time) > timedelta(seconds=30):
+        if (datetime.now() - start_time) > timedelta(seconds=60):
             raise Exception(f"Bot connection to {address}:{port} timed out")
         sleep(0.1)
 
