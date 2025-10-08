@@ -4,8 +4,9 @@ import os
 from random import randint
 
 from mcserverwrapper import Wrapper
-
-from .common_helper import connect_mineflayer, setup_workspace, download_file, assert_port_is_free
+from test.helpers.common_helper import (assert_port_is_free,
+                                        connect_mineflayer, download_file,
+                                        setup_workspace)
 
 def run_vanilla_test_url(url, offline_mode=False):
     """Run all tests for a single vanilla minecraft server url"""

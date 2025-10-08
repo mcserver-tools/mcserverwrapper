@@ -2,7 +2,7 @@
 
 init-hook="from pylint.config import find_default_config_files; import os, sys; sys.path.append(f'{os.path.dirname(next(find_default_config_files()))}/src')"
 
-ignore=test
+# ignore=test
 
 [MESSAGES CONTROL]
 
@@ -30,7 +30,8 @@ disable=too-many-arguments,
         too-many-branches,
         too-many-locals,
         broad-exception-raised,
-        global-statement
+        global-statement,
+        wrong-import-order
 
 [FORMAT]
 

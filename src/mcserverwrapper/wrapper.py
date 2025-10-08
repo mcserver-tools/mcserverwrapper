@@ -8,10 +8,10 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 
-from .util import logger
-from .server import ServerBuilder
-from .mcversion import McVersion
-from ..src import server_properties_helper
+from mcserverwrapper import server_properties_helper
+from mcserverwrapper.mcversion import McVersion
+from mcserverwrapper.server import ServerBuilder
+from mcserverwrapper.util import logger
 
 class Wrapper():
     """The outer shell of the wrapper, handling inputs and outputs"""

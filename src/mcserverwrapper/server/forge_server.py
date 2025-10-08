@@ -6,8 +6,9 @@ import json
 import os
 import re
 from zipfile import ZipFile
-from .base_server import BaseServer
-from ..mcversion import McVersion, McVersionType
+
+from mcserverwrapper.mcversion import McVersion, McVersionType
+from mcserverwrapper.server.base_server import BaseServer
 
 class ForgeServer(BaseServer):
     """

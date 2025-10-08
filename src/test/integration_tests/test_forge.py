@@ -1,7 +1,8 @@
 """Module containing tests for Forge servers"""
 
-from ..helpers.forge_helper import run_forge_test_url
+from test.helpers.forge_helper import run_forge_test_url
 
+# pylint: disable=line-too-long
 FORGE_URLS = {
     "1.20.4": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.4-49.0.31/forge-1.20.4-49.0.31-installer.jar",
     "1.20.3": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.3-49.0.2/forge-1.20.3-49.0.2-installer.jar",
@@ -12,6 +13,7 @@ FORGE_URLS = {
     "1.8.9": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/forge-1.8.9-11.15.1.2318-1.8.9-installer.jar",
     "1.7.10": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.7.10-10.13.4.1614-1.7.10/forge-1.7.10-10.13.4.1614-1.7.10-installer.jar"
 }
+# pylint: enable=line-too-long
 
 def test_multiple(forge_download_url: str):
     """Test multiple supported Forge server versions"""

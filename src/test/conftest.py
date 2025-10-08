@@ -1,34 +1,28 @@
-# pylint: disable=unused-wildcard-import
-# pylint: disable=wildcard-import
-# Needed for making pytest fixtures working correctly
-# pylint: disable=wrong-import-position, unused-import
+"""Pytest configuration"""
 
-"""
-    Pytest configuration
-"""
+# pylint: disable=wrong-import-position, wrong-import-order, missing-function-docstring
+
 import os
-import sys
+# Adding source path to sys path
 import pathlib
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../'))
+sys.path.append(f"{pathlib.Path(__file__).parent.parent}")
+sys.path.append(f"{pathlib.Path(__file__).parent}")
+# pylint: enable=wrong-import-position
 
 import pytest
 from pytest import Metafunc, TestReport, Session, ExitCode
 
-from .helpers.common_helper import get_mcserver_log
-from .integration_tests import test_forge
+from test.helpers.common_helper import get_mcserver_log, get_vanilla_urls
+from test.integration_tests import test_forge
 
-# Adding source path to sys path
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../'))
-sys.path.append(f"{pathlib.Path(__file__).parent.parent}")
-sys.path.append(f"{pathlib.Path(__file__).parent}")
+os.environ["DEBUG"] = "True"
 
 test_files_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
 if not os.path.isdir(test_files_path):
     os.mkdir(test_files_path)
-
-from .fixtures import newest_server_jar
-
-from .helpers.common_helper import get_vanilla_urls
-# pylint: enable=wrong-import-position
 
 def pytest_generate_tests(metafunc: Metafunc):
     """Pytest hook"""
@@ -89,3 +83,6 @@ def pytest_sessionfinish(session: Session, exitstatus: ExitCode):
             for line in item.mcserverlog.split("\n"):
                 print(line)
 # pylint: enable=unused-argument
+
+# pylint: disable-next=unused-wildcard-import, wildcard-import, wrong-import-order
+from test.fixtures import *

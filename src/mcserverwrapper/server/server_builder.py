@@ -5,12 +5,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from mcserverwrapper.src.util import logger
-
-from .base_server import BaseServer
-from .vanilla_server import VanillaServer
-from .forge_server import ForgeServer
-from ..mcversion import McVersion, McVersionType
+from mcserverwrapper.mcversion import McVersion, McVersionType
+from mcserverwrapper.server.base_server import BaseServer
+from mcserverwrapper.server.forge_server import ForgeServer
+from mcserverwrapper.server.vanilla_server import VanillaServer
+from mcserverwrapper.util import logger
 
 DEFAULT_START_CMD = "java -Xmx4G -Xms4G -jar server.jar nogui"
 

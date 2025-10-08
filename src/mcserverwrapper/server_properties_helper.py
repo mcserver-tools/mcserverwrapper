@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from .mcversion import McVersion
+from mcserverwrapper.mcversion import McVersion
 
 ALL_PROPERTIES = [
     "port",

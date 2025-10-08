@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .base_server import BaseServer
-from ..mcversion import McVersion, McVersionType
+from mcserverwrapper.mcversion import McVersion, McVersionType
+from mcserverwrapper.server.base_server import BaseServer
 
 class PaperServer(BaseServer):
     """

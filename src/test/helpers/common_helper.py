@@ -1,22 +1,21 @@
 """Common helper functions used during testing"""
 
-from datetime import datetime, timedelta
 import errno
-import socket
 import os
+import re
 import shutil
+import socket
+from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
 
-import re
 import pytest
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+from javascript import once, require
 from requests.adapters import HTTPAdapter, Retry
 
-from javascript import require, once
-
-from mcserverwrapper.src.util import logger
+from mcserverwrapper.util import logger
 
 mineflayer = require('mineflayer')
 

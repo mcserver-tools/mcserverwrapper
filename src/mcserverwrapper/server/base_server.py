@@ -14,9 +14,9 @@ from typing import Generator
 import pexpect
 from pexpect import popen_spawn
 
-from ..mcversion import McVersion
-from ..util import info_getter, logger
-from ..error import ServerExitedError
+from mcserverwrapper.error import ServerExitedError
+from mcserverwrapper.mcversion import McVersion
+from mcserverwrapper.util import info_getter, logger
 
 class BaseServer:
     """The base server, containing server type-independent functionality"""

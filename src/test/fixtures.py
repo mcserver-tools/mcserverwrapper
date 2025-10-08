@@ -6,7 +6,7 @@ import os
 import pytest
 import requests
 
-from .helpers import common_helper
+from test.helpers import common_helper
 
 @pytest.fixture
 def newest_server_jar():

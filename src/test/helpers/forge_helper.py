@@ -1,16 +1,16 @@
 """Helpers for testing Forge servers"""
 
 import os
-from random import randint
 import re
 import subprocess
+from random import randint
 
 import pytest
 
 from mcserverwrapper import Wrapper
-from mcserverwrapper.src.error import ServerExitedError
-
-from .common_helper import assert_port_is_free, download_file, setup_workspace
+from mcserverwrapper.error import ServerExitedError
+from test.helpers.common_helper import (assert_port_is_free, download_file,
+                                        setup_workspace)
 
 def install_forge(url: str):
     """Install a forge server from a given installer download url"""

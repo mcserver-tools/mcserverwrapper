@@ -1,6 +1,6 @@
 """Export util classes"""
 
-from . import info_getter, logger
+from mcserverwrapper.util import info_getter, logger
 
 __exports__ = [
     info_getter,
