@@ -1,7 +1,7 @@
-requests
-pexpect
-mcstatus
-bs4
-javascript
-pytest
-pylint
+bs4==0.0.2
+javascript==1!1.2.6
+mcstatus==12.0.5
+pexpect==4.9.0
+pylint==3.3.9
+pytest==8.4.2
+requests==2.32.5

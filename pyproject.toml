@@ -4,35 +4,62 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcserverwrapper"
-version = "0.0.3"
+version = "0.0.3rc1"
 authors = [
   { name="Ableytner", email="ableytner@gmx.at" },
 ]
 description = "A wrapper for minecraft servers, usable as a python package or from the console."
 readme = "README.md"
-license = { file="LICENSE" }
-requires-python = ">=3.10"
+license = "GPL-3.0"
+license-files = [
+  "LICENSE",
+]
+requires-python = ">=3.9"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: Microsoft :: Windows",
+  "Development Status :: 4 - Beta",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
 dependencies = [
-    "requests",
-    "pexpect",
-    "mcstatus",
+  "mcstatus==12.0.5",
+  "pexpect==4.9.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "requests",
-    "bs4",
-    "pylint",
-    "javascript",
+  "bs4==0.0.2",
+  "javascript==1!1.2.6",
+  "pylint==3.3.9",
+  "pytest==8.4.2",
+  "requests==2.32.5",
 ]
 
 [project.urls]
 Repository = "https://github.com/mcserver-tools/mcserverwrapper"
 "Bug Tracker" = "https://github.com/mcserver-tools/mcserverwrapper/issues"
+
+[tool.ruff.lint]
+select = ["TID252"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
+
+[tool.isort]
+lines_after_imports=1
+
+[tool.mypy]
+strict = false
+
+[[tool.mypy.overrides]]
+module = ["dill.*"]
+ignore_missing_imports = true
