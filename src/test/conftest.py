@@ -42,7 +42,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         for item in items:
             if item.name.startswith("test_all[") or item.name.startswith("test_multiple["):
                 item.add_marker(skip_pylint)
-    
+
     skip_pylint = pytest.mark.skip(reason="skipping testing in online mode as "
                                    "https://github.com/PrismarineJS/prismarine-auth/pull/137 is not yet merged")
     for item in items:
