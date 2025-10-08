@@ -1,0 +1,21 @@
+name: Remove 'ready to merge' label
+
+on:
+  pull_request:
+    types: [closed, synchronize]
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  remove_label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-ecosystem/action-remove-labels@v1
+        if: (github.event.action == 'synchronize') || (github.event.pull_request.merged == true)
+        with:
+          labels: 'ready to merge'
+          fail_on_error: false
