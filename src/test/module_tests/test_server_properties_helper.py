@@ -1,7 +1,6 @@
 """Test the server_properties_helper methods"""
 
 import os
-import pathlib
 
 from mcserverwrapper import server_properties_helper as sph
 from mcserverwrapper.mcversion import McVersion, McVersionType

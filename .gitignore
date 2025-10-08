@@ -6,7 +6,6 @@
 *\venv*
 *\dist
 *\temp
-
 *.pyc
 *.egg-info
 password.txt
