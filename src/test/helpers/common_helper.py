@@ -23,9 +23,9 @@ def setup_workspace():
     """Setup the testing folder"""
 
     try:
-        if os.path.isdir("testdir"):
-            shutil.rmtree("testdir")
-        os.makedirs("testdir", exist_ok=True)
+        if os.path.isdir(os.path.join("temp", "testdir")):
+            shutil.rmtree(os.path.join("temp", "testdir"))
+        os.makedirs(os.path.join("temp", "testdir"), exist_ok=True)
     except PermissionError as e:
         pytest.skip("cannot access testdir")
 
@@ -35,11 +35,11 @@ def setup_workspace():
 def reset_workspace():
     """Delete everything inside the testing folder"""
 
-    for entry in os.listdir("testdir"):
-        if os.path.isfile(os.path.join("testdir", entry)):
-            os.remove(os.path.join("testdir", entry))
+    for entry in os.listdir(os.path.join("temp", "testdir")):
+        if os.path.isfile(os.path.join("temp", "testdir", entry)):
+            os.remove(os.path.join("temp", "testdir", entry))
         else:
-            shutil.rmtree(os.path.join("testdir", entry))
+            shutil.rmtree(os.path.join("temp", "testdir", entry))
 
 def assert_port_is_free(port: int = 25565, strict=True) -> bool:
     """Skips the current test if the given port is not free"""
@@ -119,7 +119,7 @@ def download_file(url, counter=""):
                         backoff_factor=0.1)
         s.mount("https://", HTTPAdapter(max_retries=retries))
         req = s.get(url, timeout=30)
-        with open(os.path.join("testdir", local_filename), 'wb') as file:
+        with open(os.path.join("temp", "testdir", local_filename), 'wb') as file:
             file.write(req.content)
     return local_filename
 

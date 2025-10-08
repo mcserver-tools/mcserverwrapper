@@ -40,7 +40,7 @@ def run_vanilla_test(jarfile, offline_mode=False):
     if offline_mode:
         server_property_args["onli"] = "false"
 
-    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", jarfile), server_start_command=start_cmd, print_output=False,
+    wrapper = Wrapper(os.path.join(os.getcwd(), "temp", "testdir", jarfile), server_start_command=start_cmd, print_output=False,
                       server_property_args=server_property_args)
     wrapper.startup()
     assert wrapper.server_running()

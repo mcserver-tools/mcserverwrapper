@@ -20,9 +20,20 @@ from test.integration_tests import test_forge
 
 os.environ["DEBUG"] = "True"
 
-test_files_path = os.path.join(pathlib.Path(__file__).parent.resolve(), "temp")
-if not os.path.isdir(test_files_path):
-    os.mkdir(test_files_path)
+if not os.path.isdir("temp"):
+    os.mkdir("temp")
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-linting", action="store_true", default=False, help="skip the pylint test"
+    )
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--skip-linting"):
+        skip_pylint = pytest.mark.skip(reason="skipping code linting due to --skip-linting arg")
+        for item in items:
+            if item.name in ["test_pylint", "test_mypy"]:
+                item.add_marker(skip_pylint)
 
 def pytest_generate_tests(metafunc: Metafunc):
     """Pytest hook"""

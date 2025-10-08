@@ -18,11 +18,10 @@ def test_get_mixed_params():
         "use-native-transport": "false"
     }
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write("\n".join([f"{key}={value}" for key, value in props.items()]))
 
-    result = sph.get_properties(props_path, McVersion("1.20", McVersionType.VANILLA))
+    result = sph.get_properties("temp", McVersion("1.20", McVersionType.VANILLA))
 
     assert len(result) == 5
     assert result["maxp"] == props["max-players"]
@@ -90,8 +89,7 @@ def test_params_with_file():
                       "a-final-prop=aha\n" + \
                       "online-mode=true\n"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -99,7 +97,7 @@ def test_params_with_file():
         "untp": "true"
     }
 
-    result = sph.parse_properties_args(props_path, props, McVersion("1.20", McVersionType.VANILLA))
+    result = sph.parse_properties_args("temp", props, McVersion("1.20", McVersionType.VANILLA))
 
     # ensure that props didn't change
     assert len(props) == 2
@@ -176,8 +174,7 @@ def test_save_existing():
                       "a-final-prop=aha\n" + \
                       "online-mode=false"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -188,7 +185,7 @@ def test_save_existing():
         "untp": "false"
     }
 
-    sph.save_properties(props_path, props)
+    sph.save_properties("temp", props)
 
     # ensure that props didn't change
     assert len(props) == 5
@@ -198,7 +195,7 @@ def test_save_existing():
     assert props["levt"] == sph.DEFAULT_LEVEL_TYPE_POST_1_19
     assert props["untp"] == "false"
 
-    with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
     assert len(lines) == 7
@@ -216,8 +213,7 @@ def test_save_new():
     props_test_data = "some-other-prop=haha\n" + \
                       "a-final-prop=aha\n"
 
-    props_path = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "temp")
-    with open(os.path.join(props_path, "server.properties"), "w+", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "w+", encoding="utf8") as props_file:
         props_file.write(props_test_data)
 
     props = {
@@ -228,7 +224,7 @@ def test_save_new():
         "untp": "true"
     }
 
-    sph.save_properties(props_path, props)
+    sph.save_properties("temp", props)
 
     # ensure that props didn't change
     assert len(props) == 5
@@ -238,7 +234,7 @@ def test_save_new():
     assert props["levt"] == "minecraft\\:normal"
     assert props["untp"] == "true"
 
-    with open(os.path.join(props_path, "server.properties"), "r", encoding="utf8") as props_file:
+    with open(os.path.join("temp", "server.properties"), "r", encoding="utf8") as props_file:
         lines = props_file.read().splitlines()
 
     assert len(lines) == 7

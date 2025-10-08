@@ -48,7 +48,7 @@ def _test_download_all_jars(jar_download_url):
     setup_workspace()
 
     jarfile = download_file(url)
-    assert os.path.isfile(os.path.join("testdir", jarfile))
+    assert os.path.isfile(os.path.join("temp", "testdir", jarfile))
 
 def _test_broken_versions():
     setup_workspace()
@@ -91,7 +91,7 @@ def test_mineflayer(newest_server_jar):
         "untp": "false"
     }
 
-    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+    wrapper = Wrapper(os.path.join(os.getcwd(), "temp", "testdir", newest_server_jar),
                       server_start_command=start_cmd,
                       server_property_args=server_params,
                       print_output=False)
@@ -124,7 +124,7 @@ def test_invalid_start_params(newest_server_jar):
 
     start_cmd = f"java -Xmx2G -jar {newest_server_jar}nogui"
 
-    wrapper = Wrapper(os.path.join(os.getcwd(), "testdir", newest_server_jar),
+    wrapper = Wrapper(os.path.join(os.getcwd(), "temp", "testdir", newest_server_jar),
                       server_start_command=start_cmd,
                       print_output=False)
 

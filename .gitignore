@@ -5,10 +5,8 @@
 *\.vscode
 *\venv*
 *\dist
-*\testdir
-*\testdir_persistent
+*\temp
+
 *.pyc
 *.egg-info
-src/test/temp
-examples/temp
 password.txt
