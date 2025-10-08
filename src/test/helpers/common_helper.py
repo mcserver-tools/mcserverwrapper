@@ -129,7 +129,7 @@ def get_mcserver_log() -> str:
     if logger.logfile_path is None:
         print("Logger was not yet setup, cannot print logfile")
         return ""
-    
+
     if not os.path.isfile(logger.logfile_path):
         print("logfile doesn't exist, cannot print logfile")
         return ""
