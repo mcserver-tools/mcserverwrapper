@@ -39,6 +39,7 @@ dependencies = [
 dev = [
   "bs4==0.0.2",
   "javascript==1!1.2.6",
+  "pre-commit==4.3.0",
   "pylint==3.3.9",
   "pytest==8.4.2",
   "requests==2.32.5",

@@ -3,16 +3,16 @@
 import os
 from datetime import datetime, timedelta
 from random import randint
-from time import sleep
-
-import pytest
-
-from mcserverwrapper import Wrapper, error
 from test.helpers.common_helper import (assert_port_is_free,
                                         connect_mineflayer, download_file,
                                         setup_workspace)
 from test.helpers.vanilla_helper import run_vanilla_test, run_vanilla_test_url
 from test.testable_thread import TestableThread
+from time import sleep
+
+import pytest
+
+from mcserverwrapper import Wrapper, error
 
 def test_all(jar_version_tuple):
     """Tests all of the vanilla minecraft versions"""

@@ -1,12 +1,11 @@
 """Defines pytest fixtures"""
 
-import shutil
 import os
+import shutil
+from test.helpers import common_helper
 
 import pytest
 import requests
-
-from test.helpers import common_helper
 
 @pytest.fixture
 def newest_server_jar():

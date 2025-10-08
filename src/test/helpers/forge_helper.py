@@ -4,13 +4,13 @@ import os
 import re
 import subprocess
 from random import randint
+from test.helpers.common_helper import (assert_port_is_free, download_file,
+                                        setup_workspace)
 
 import pytest
 
 from mcserverwrapper import Wrapper
 from mcserverwrapper.error import ServerExitedError
-from test.helpers.common_helper import (assert_port_is_free, download_file,
-                                        setup_workspace)
 
 def install_forge(url: str):
     """Install a forge server from a given installer download url"""
@@ -73,7 +73,7 @@ def run_forge_test(jarfile, offline_mode=False):
     try:
         wrapper.startup()
     except ServerExitedError:
-        # server exited because of invalid java verison
+        # server exited because of invalid java version
         pytest.skip("Server exited likely due to wrong java version")
 
     try:

@@ -12,10 +12,10 @@ sys.path.append(f"{pathlib.Path(__file__).parent.parent}")
 sys.path.append(f"{pathlib.Path(__file__).parent}")
 # pylint: enable=wrong-import-position
 
-import pytest
-
 from test.helpers.common_helper import get_mcserver_log, get_vanilla_urls
 from test.integration_tests import test_forge
+
+import pytest
 
 os.environ["DEBUG"] = "True"
 
@@ -38,7 +38,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 item.add_marker(skip_pylint)
 
     if config.getoption("--skip-test-all"):
-        skip_pylint = pytest.mark.skip(reason="skipping testing all minecraft versions due to mising --test-all arg")
+        skip_pylint = pytest.mark.skip(reason="skipping testing all minecraft versions due to --skip-test-all arg")
         for item in items:
             if item.name.startswith("test_all[") or item.name.startswith("test_multiple["):
                 item.add_marker(skip_pylint)

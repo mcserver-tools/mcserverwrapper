@@ -1,4 +1,4 @@
-"""A module contining the base server class"""
+"""A module containing the base server class"""
 
 from __future__ import annotations
 

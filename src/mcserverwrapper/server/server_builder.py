@@ -33,7 +33,7 @@ class ServerBuilder:
 
         Args:
             jar_file (str): the full or relative path to the jar file to be used to start the server
-        
+
         Returns:
             ServerBuilder: a new ServerBuilder instance
         """

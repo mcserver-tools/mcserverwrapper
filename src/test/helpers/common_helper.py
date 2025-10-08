@@ -77,14 +77,14 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
             'auth': 'microsoft',
             'username': password[0],
             'password': password[1],
-            'hideErrors': False 
+            'hideErrors': False
         })
     else:
         bot = mineflayer.createBot({
             'host': address,
             'port': port,
             'username': "Developer",
-            'hideErrors': False 
+            'hideErrors': False
         })
 
     bot_connected = [False]
@@ -108,7 +108,7 @@ def connect_mineflayer(address = "127.0.0.1", port = 25565, offline_mode=False):
 def download_file(url, counter=""):
     """
     Download the file from the given url and return its path
-    
+
     Retry code from https://stackoverflow.com/a/35504626/15436169
     """
 
