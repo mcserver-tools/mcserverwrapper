@@ -18,7 +18,7 @@ FORGE_URLS = {
 def test_multiple(forge_download_url: str):
     """Test multiple supported Forge server versions"""
 
-    run_forge_test_url(forge_download_url)
+    run_forge_test_url(forge_download_url, offline_mode=True)
 
 def test_single_online():
     """Test a single Forge version in online mode"""

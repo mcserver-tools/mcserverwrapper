@@ -27,7 +27,7 @@ def pytest_addoption(parser: pytest.Parser):
         "--skip-linting", action="store_true", default=False, help="skip the pylint test"
     )
     parser.addoption(
-        "--test-all", action="store_true", default=False, help="test all supported minecraft versions"
+        "--skip-test-all", action="store_true", default=False, help="skip testing all supported minecraft versions"
     )
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
@@ -36,11 +36,18 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         for item in items:
             if item.name in ["test_pylint", "test_mypy"]:
                 item.add_marker(skip_pylint)
-    if not config.getoption("--test-all"):
+
+    if config.getoption("--skip-test-all"):
         skip_pylint = pytest.mark.skip(reason="skipping testing all minecraft versions due to mising --test-all arg")
         for item in items:
-            if item.name.startswith("test_all[") or item.name.endswith("test_multiple["):
+            if item.name.startswith("test_all[") or item.name.startswith("test_multiple["):
                 item.add_marker(skip_pylint)
+    
+    skip_pylint = pytest.mark.skip(reason="skipping testing in online mode as "
+                                   "https://github.com/PrismarineJS/prismarine-auth/pull/137 is not yet merged")
+    for item in items:
+        if item.name in ["test_single_online", "test_mineflayer"]:
+            item.add_marker(skip_pylint)
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     """Pytest hook"""
