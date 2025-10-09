@@ -4,6 +4,7 @@ import os
 import pathlib
 
 import requests
+
 from mcserverwrapper import Wrapper
 
 def download_server_jar():

@@ -1,0 +1,29 @@
+"""Defines pytest fixtures"""
+
+import os
+import shutil
+from test.helpers import common_helper
+
+import pytest
+import requests
+
+@pytest.fixture
+def newest_server_jar():
+    """Download the newest server jar version and return the jar file path"""
+
+    url = "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+    filename = os.path.join("temp", "testdir_persistent", "server.jar")
+
+    os.makedirs(os.path.join("temp", "testdir_persistent"), exist_ok=True)
+
+    if not os.path.isfile(filename):
+        req = requests.get(url, timeout=5)
+        with open(filename, 'wb') as file:
+            file.write(req.content)
+
+    common_helper.setup_workspace()
+
+    testdir_filename = os.path.join("temp", "testdir", "server.jar")
+    shutil.copyfile(filename, testdir_filename)
+
+    return "server.jar"

@@ -57,23 +57,41 @@ Finally, the server is stopped gracefully.
 
 More examples can be found in the **examples** folder.
 
-## Run tests locally
+## Development environment setup
 
-In order to run tests locally, there are a few things that have to be setup:
+If you want to contribute to this project, you need to set up your local environment.
 
-### Add credentials for testing
+### Clone the repository
 
-To simulate a player connecting ot the server, it needs to authenticate against microsofts servers. This means, that a microsoft account which owns Minecraft is needed. Don't worry, the credentials are only saved locally.
-
-Create a new file named *password.txt* in the repository root and add the following content (without the brackets):
+Run the command
+```bash
+git clone https://github.com/mcserver-tools/mcserverwrapper
+cd mcserverwrapper
 ```
-(username-here)
-(password-here)
+in your terminal.
+
+### Install pip packages
+
+To install all optional as well as development python packages, run the following commands in the project root.
+
+Windows:
+```bash
+py -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
+```
+
+Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ### Node
 
 Node 20 is needed to use MineFlayer.
+The install instructions can be found below:
 
 #### Windows
 
@@ -98,9 +116,41 @@ To actually run a minecraft server, a Java 21 JRE needs to be installed and adde
 
 Download it from (here)[https://adoptium.net/temurin/releases/].
 
+### Add credentials for testing
+
+To simulate a player connecting to the server, it needs to authenticate against microsofts servers. This means, that a microsoft account which owns Minecraft is needed. Don't worry, the credentials are only saved locally.
+
+Create a new file named *password.txt* in the repository root and add the following content (without the brackets):
+```
+(username-here)
+(password-here)
+```
+
 ### Run tests
 
 After installing all of the requirements, the tests can be ran using
 ```bash
-python -m pytest
+python -m pytest src -rs --skip-linting --skip-test-all
+```
+
+If you want to run tests for all Minecraft versions, remove the `--skip-test-all` argument from the command above.
+
+> **Warning**
+> Beware that testing all versions can take multiple hours!
+
+### Git pre-commit hooks
+
+Pre-commit hooks are used to check and autofix formatting issues and typos before you commit your changes.
+Once installed, they run automatically if you run `git commit ...`.
+
+Using these is optional, but encouraged.
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+To verify the installation and run all checks:
+```bash
+pre-commit run --all-files
 ```

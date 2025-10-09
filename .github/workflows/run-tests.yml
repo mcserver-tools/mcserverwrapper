@@ -1,6 +1,6 @@
 name: Run Tests
 
-on: 
+on:
   push:
     branches: [main]
   pull_request:
@@ -10,7 +10,7 @@ jobs:
   pylint:
     strategy:
       matrix:
-        python-version: ["3.8", "3.13"]
+        python-version: ["3.14"]
     uses: ./.github/workflows/define-pylint.yml
     with:
       python-version: ${{ matrix.python-version }}
@@ -19,7 +19,7 @@ jobs:
   pytest:
     strategy:
       matrix:
-        python-version: ["3.8", "3.13"]
+        python-version: ["3.9", "3.14"]
     needs: pylint
     if: |
       (github.event_name == 'push' && github.ref_name == 'main') ||
@@ -28,4 +28,5 @@ jobs:
     uses: ./.github/workflows/define-pytest.yml
     with:
       python-version: ${{ matrix.python-version }}
+      pytest-args: "--skip-test-all"
     secrets: inherit

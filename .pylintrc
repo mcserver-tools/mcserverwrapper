@@ -1,5 +1,8 @@
-[MAIN]
-max-line-length=150
+[MASTER]
+
+init-hook="from pylint.config import find_default_config_files; import os, sys; sys.path.append(f'{os.path.dirname(next(find_default_config_files()))}/src')"
+
+# ignore=test
 
 [MESSAGES CONTROL]
 
@@ -17,11 +20,19 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=too-many-arguments,
+        invalid-name,
         fixme,
-        bare-except,
         duplicate-code,
         too-few-public-methods,
-        global-statement,
+        too-many-instance-attributes,
+        too-many-positional-arguments,
+        logging-fstring-interpolation,
         too-many-branches,
+        too-many-locals,
         broad-exception-raised,
-        relative-beyond-top-level
+        global-statement,
+        wrong-import-order
+
+[FORMAT]
+
+max-line-length=120
